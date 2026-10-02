@@ -1,0 +1,99 @@
+# ============================================================
+# Build output
+# ============================================================
+
+# Ignore everything generated under build/
+build/*
+
+# Keep the Debug directory so Git can reach the HEX files
+!build/Debug/
+
+# Ignore everything inside Debug/
+build/Debug/*
+
+# Keep firmware HEX files
+!build/Debug/*.hex
+
+
+# ============================================================
+# CMake / Ninja generated files
+# ============================================================
+
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+CTestTestfile.cmake
+Makefile
+.ninja_deps
+.ninja_log
+build.ninja
+rules.ninja
+
+# CMake generated metadata
+compile_commands.json
+
+
+# ============================================================
+# Compiler / linker generated files
+# ============================================================
+
+*.o
+*.obj
+*.a
+*.so
+*.d
+*.su
+*.lst
+
+# Firmware build artifacts
+*.elf
+*.map
+*.bin
+# *.hex is intentionally NOT ignored
+
+
+# ============================================================
+# Personal CMake configuration
+# ============================================================
+
+# User-specific CMake presets
+CMakeUserPresets.json
+
+# CMake local state
+.cmake/
+
+
+# ============================================================
+# VS Code
+# ============================================================
+
+.vscode/
+
+# ============================================================
+# STM32CubeIDE personal/workspace files
+# ============================================================
+
+.project
+.cproject
+.settings/
+
+
+# ============================================================
+# STM32CubeMX temporary / backup files
+# ============================================================
+
+~*
+*.bak
+*.tmp
+
+# CubeMX backup directory
+"Project Backups/"
+
+
+# ============================================================
+# OS / editor files
+# ============================================================
+
+.DS_Store
+Thumbs.db
+desktop.ini

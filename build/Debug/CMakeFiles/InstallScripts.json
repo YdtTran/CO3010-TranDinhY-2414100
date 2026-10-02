@@ -1,8 +1,0 @@
-{
-	"InstallScripts" : 
-	[
-		"E:/Workspace/University/HCMUT/CO3010/build/Debug/cmake_install.cmake",
-		"E:/Workspace/University/HCMUT/CO3010/build/Debug/cmake/stm32cubemx/cmake_install.cmake"
-	],
-	"Parallel" : false
-}

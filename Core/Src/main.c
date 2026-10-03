@@ -21,11 +21,26 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#define GREEN_TIME 3
+#define YELLOW_TIME 2
+#define RED_TIME 5
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
+typedef enum
+{
+  LED_GREEN,
+  LED_YELLOW,
+  LED_RED
+} light_state_t;
+
+typedef struct
+{
+  uint8_t counter;
+  light_state_t state;
+  uint32_t gpio[3];
+} light_handle_t;
 
 /* USER CODE END PTD */
 
@@ -43,7 +58,8 @@
 TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
-
+light_handle_t lights[3];
+uint8_t update_timer = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -51,7 +67,7 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
-
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -90,21 +106,63 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
 
+  HAL_TIM_Base_Start_IT(&htim2);
+
+  // G - Y - R
+  lights[0].gpio[0] = GPIO_PIN_4;
+  lights[0].gpio[1] = GPIO_PIN_5;
+  lights[0].gpio[2] = GPIO_PIN_6;
+  lights[0].state = LED_GREEN;
+  lights[0].counter = GREEN_TIME - 1;
+  HAL_GPIO_WritePin(GPIOA, lights[0].gpio[0], GPIO_PIN_SET);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_4);
-    HAL_GPIO_TogglePin(GPIOA, GPIO_PIN_5);
-    HAL_Delay(2000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    if (update_timer)
+    {
+      update_timer = 0;
+      // Update the traffic lights
+      // doing for a single light for now
+      if (lights[0].counter == 0)
+      {
+        switch (lights[0].state)
+        {
+        case LED_GREEN:
+          lights[0].state = LED_YELLOW;
+          lights[0].counter = YELLOW_TIME;
+          break;
+        case LED_YELLOW:
+          lights[0].state = LED_RED;
+          lights[0].counter = RED_TIME;
+          break;
+        case LED_RED:
+          lights[0].state = LED_GREEN;
+          lights[0].counter = GREEN_TIME;
+          break;
+        default:
+          break;
+        }
+      }
+      lights[0].counter--;
+      for (int i = 0; i < 3; i++)
+      {
+        if (i == lights[0].state)
+        {
+          HAL_GPIO_WritePin(GPIOA, lights[0].gpio[i], GPIO_PIN_SET);
+        }
+        else
+        {
+          HAL_GPIO_WritePin(GPIOA, lights[0].gpio[i], GPIO_PIN_RESET);
+        }
+      }
+    }
   }
   /* USER CODE END 3 */
 }
@@ -234,7 +292,13 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  if (htim->Instance == TIM2)
+  {
+    update_timer = 1;
+  }
+}
 /* USER CODE END 4 */
 
 /**

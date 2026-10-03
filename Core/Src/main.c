@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "traffic_light.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -28,19 +29,6 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-typedef enum
-{
-  LED_GREEN,
-  LED_YELLOW,
-  LED_RED
-} light_state_t;
-
-typedef struct
-{
-  uint8_t counter;
-  light_state_t state;
-  uint32_t gpio[3];
-} light_handle_t;
 
 /* USER CODE END PTD */
 
@@ -58,7 +46,7 @@ typedef struct
 TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
-light_handle_t lights[3];
+light_handle_t lights[4];
 uint8_t update_timer = 0;
 /* USER CODE END PV */
 
@@ -68,11 +56,46 @@ static void MX_GPIO_Init(void);
 static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
+void update_traffic_lights(light_handle_t *traffic_light);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+void update_traffic_lights(light_handle_t *traffic_light)
+{
+  if (traffic_light->counter == 0)
+  {
+    switch (traffic_light->state)
+    {
+    case LED_GREEN:
+      traffic_light->state = LED_YELLOW;
+      traffic_light->counter = YELLOW_TIME;
+      break;
+    case LED_YELLOW:
+      traffic_light->state = LED_RED;
+      traffic_light->counter = RED_TIME;
+      break;
+    case LED_RED:
+      traffic_light->state = LED_GREEN;
+      traffic_light->counter = GREEN_TIME;
+      break;
+    default:
+      break;
+    }
+  }
+  traffic_light->counter--;
+  for (int i = 0; i < 3; i++)
+  {
+    if (i == traffic_light->state)
+    {
+      HAL_GPIO_WritePin(GPIOA, traffic_light->gpio[i], GPIO_PIN_SET);
+    }
+    else
+    {
+      HAL_GPIO_WritePin(GPIOA, traffic_light->gpio[i], GPIO_PIN_RESET);
+    }
+  }
+}
 /* USER CODE END 0 */
 
 /**
@@ -110,12 +133,24 @@ int main(void)
   HAL_TIM_Base_Start_IT(&htim2);
 
   // G - Y - R
-  lights[0].gpio[0] = GPIO_PIN_4;
-  lights[0].gpio[1] = GPIO_PIN_5;
-  lights[0].gpio[2] = GPIO_PIN_6;
-  lights[0].state = LED_GREEN;
-  lights[0].counter = GREEN_TIME - 1;
-  HAL_GPIO_WritePin(GPIOA, lights[0].gpio[0], GPIO_PIN_SET);
+  lights[0] = (light_handle_t){.counter = GREEN_TIME - 1, .state = LED_GREEN, .gpio = {GPIO_PIN_4, GPIO_PIN_5, GPIO_PIN_6}};
+  lights[1] = (light_handle_t){.counter = GREEN_TIME - 1, .state = LED_GREEN, .gpio = {GPIO_PIN_7, GPIO_PIN_8, GPIO_PIN_9}};
+  lights[2] = (light_handle_t){.counter = RED_TIME - 1, .state = LED_RED, .gpio = {GPIO_PIN_10, GPIO_PIN_11, GPIO_PIN_12}};
+  lights[3] = (light_handle_t){.counter = RED_TIME - 1, .state = LED_RED, .gpio = {GPIO_PIN_13, GPIO_PIN_14, GPIO_PIN_15}};
+  for (int i = 0; i < 4; i++)
+  {
+    for (int j = 0; j < 3; j++)
+    {
+      if (j == lights[i].state)
+      {
+        HAL_GPIO_WritePin(GPIOA, lights[i].gpio[j], GPIO_PIN_SET);
+      }
+      else
+      {
+        HAL_GPIO_WritePin(GPIOA, lights[i].gpio[j], GPIO_PIN_RESET);
+      }
+    }
+  }
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -130,43 +165,14 @@ int main(void)
       update_timer = 0;
       // Update the traffic lights
       // doing for a single light for now
-      if (lights[0].counter == 0)
+      for (int i = 0; i < 4; i++)
       {
-        switch (lights[0].state)
-        {
-        case LED_GREEN:
-          lights[0].state = LED_YELLOW;
-          lights[0].counter = YELLOW_TIME;
-          break;
-        case LED_YELLOW:
-          lights[0].state = LED_RED;
-          lights[0].counter = RED_TIME;
-          break;
-        case LED_RED:
-          lights[0].state = LED_GREEN;
-          lights[0].counter = GREEN_TIME;
-          break;
-        default:
-          break;
-        }
-      }
-      lights[0].counter--;
-      for (int i = 0; i < 3; i++)
-      {
-        if (i == lights[0].state)
-        {
-          HAL_GPIO_WritePin(GPIOA, lights[0].gpio[i], GPIO_PIN_SET);
-        }
-        else
-        {
-          HAL_GPIO_WritePin(GPIOA, lights[0].gpio[i], GPIO_PIN_RESET);
-        }
+        update_traffic_lights(&lights[i]);
       }
     }
+    /* USER CODE END 3 */
   }
-  /* USER CODE END 3 */
 }
-
 /**
  * @brief System Clock Configuration
  * @retval None

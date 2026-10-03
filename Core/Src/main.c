@@ -18,13 +18,11 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "traffic_light.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#define GREEN_TIME 3
-#define YELLOW_TIME 2
-#define RED_TIME 5
+#include "traffic_light.h"
+#include "seg_7_led.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -39,7 +37,9 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+#define GREEN_TIME 3
+#define YELLOW_TIME 2
+#define RED_TIME 5
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -48,6 +48,7 @@ TIM_HandleTypeDef htim2;
 /* USER CODE BEGIN PV */
 light_handle_t lights[4];
 uint8_t update_timer = 0;
+seg_7_led_handle_t seg7_led_handle;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -151,6 +152,10 @@ int main(void)
       }
     }
   }
+
+  // 7 Segment led
+  seg_7_led_init(&seg7_led_handle, SEG_7_LED_COMMON_ANODE, GPIOB, (uint32_t[]){GPIO_PIN_0, GPIO_PIN_1, GPIO_PIN_2, GPIO_PIN_3, GPIO_PIN_4, GPIO_PIN_5, GPIO_PIN_6, GPIO_PIN_7});
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -160,19 +165,26 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    if (update_timer)
+    // if (update_timer)
+    // {
+    //   update_timer = 0;
+    //   // Update the traffic lights
+    //   // doing for a single light for now
+    //   for (int i = 0; i < 4; i++)
+    //   {
+    //     update_traffic_lights(&lights[i]);
+    //   }
+    //   seg_7_led_display(&seg7_led_handle, lights[0].counter);
+    // }
+    for (int i = 0; i < 10; i++)
     {
-      update_timer = 0;
-      // Update the traffic lights
-      // doing for a single light for now
-      for (int i = 0; i < 4; i++)
-      {
-        update_traffic_lights(&lights[i]);
-      }
+      seg_7_led_display(&seg7_led_handle, i);
+      HAL_Delay(1000);
     }
-    /* USER CODE END 3 */
   }
+  /* USER CODE END 3 */
 }
+
 /**
  * @brief System Clock Configuration
  * @retval None
@@ -269,12 +281,16 @@ static void MX_GPIO_Init(void)
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13 | GPIO_PIN_14, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : PC13 PC14 */
   GPIO_InitStruct.Pin = GPIO_PIN_13 | GPIO_PIN_14;
@@ -291,6 +307,14 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : PB0 PB1 PB2 PB3
+                           PB4 PB5 PB6 PB7 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 

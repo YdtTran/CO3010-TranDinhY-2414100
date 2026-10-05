@@ -166,21 +166,17 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    update_timer = 1;
-    HAL_Delay(1000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    if (update_timer)
+    update_timer = 0;
+    for (int i = 0; i < 4; i++)
     {
-      update_timer = 0;
-      for (int i = 0; i < 4; i++)
-      {
-        update_traffic_lights(&lights[i]);
-      }
-      seg_7_led_display(&seg7_led_handle1, lights[0].counter);
-      seg_7_led_display(&seg7_led_handle2, lights[3].counter);
+      update_traffic_lights(&lights[i]);
     }
+    seg_7_led_display(&seg7_led_handle1, lights[0].counter);
+    seg_7_led_display(&seg7_led_handle2, lights[3].counter);
+    HAL_Delay(1000);
   }
   /* USER CODE END 3 */
 }

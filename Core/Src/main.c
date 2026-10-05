@@ -43,7 +43,7 @@
 TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
-uint32_t gpio_arr[12] = {GPIO_PIN_4, GPIO_PIN_5, GPIO_PIN_6, GPIO_PIN_7, GPIO_PIN_8, GPIO_PIN_9, GPIO_PIN_10, GPIO_PIN_11, GPIO_PIN_12, GPIO_PIN_13, GPIO_PIN_14, GPIO_PIN_15};
+uint32_t gpio_arr[12] = {GPIO_PIN_5, GPIO_PIN_6, GPIO_PIN_7, GPIO_PIN_8, GPIO_PIN_9, GPIO_PIN_10, GPIO_PIN_11, GPIO_PIN_12, GPIO_PIN_13, GPIO_PIN_14, GPIO_PIN_15, GPIO_PIN_4};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -52,6 +52,32 @@ static void MX_GPIO_Init(void);
 static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
+void clearAllClock(void)
+{
+  for (int i = 0; i < 12; i++)
+  {
+    HAL_GPIO_WritePin(GPIOA, gpio_arr[i], GPIO_PIN_RESET);
+  }
+};
+
+void setNumberOnClock(int number)
+{
+  HAL_GPIO_WritePin(GPIOA, gpio_arr[number], GPIO_PIN_SET);
+}
+
+void clearNumberOnClock(int number)
+{
+  HAL_GPIO_WritePin(GPIOA, gpio_arr[number], GPIO_PIN_RESET);
+}
+
+void setClockTime(uint8_t hour, uint8_t minute, uint8_t second)
+{
+  clearAllClock();
+  setNumberOnClock(hour % 12);
+  setNumberOnClock((minute / 5) % 12);
+  setNumberOnClock((second / 5) % 12);
+}
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -90,22 +116,35 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  uint8_t counter = 0;
+  clearAllClock();
+  uint8_t hour = 0;
+  uint8_t minute = 0;
+  uint8_t second = 0;
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
-    HAL_GPIO_WritePin(GPIOA, gpio_arr[counter], GPIO_PIN_SET);
-    counter++;
-    if (counter >= 12)
+    second++;
+    if (second >= 60)
     {
-      counter = 0;
+      second = 0;
+      minute++;
+      if (minute >= 60)
+      {
+        minute = 0;
+        hour++;
+        if (hour >= 24)
+        {
+          hour = 0;
+        }
+      }
     }
-    /* USER CODE BEGIN 3 */
-    HAL_Delay(1000);
+
+    setClockTime(hour, minute, second);
+
+    HAL_Delay(10);
   }
   /* USER CODE END 3 */
 }

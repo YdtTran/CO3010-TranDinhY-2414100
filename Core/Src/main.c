@@ -37,18 +37,13 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-#define GREEN_TIME 3
-#define YELLOW_TIME 2
-#define RED_TIME 5
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
-light_handle_t lights[4];
-uint8_t update_timer = 0;
-seg_7_led_handle_t seg7_led_handle1, seg7_led_handle2;
+uint32_t gpio_arr[12] = {GPIO_PIN_4, GPIO_PIN_5, GPIO_PIN_6, GPIO_PIN_7, GPIO_PIN_8, GPIO_PIN_9, GPIO_PIN_10, GPIO_PIN_11, GPIO_PIN_12, GPIO_PIN_13, GPIO_PIN_14, GPIO_PIN_15};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -57,46 +52,11 @@ static void MX_GPIO_Init(void);
 static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
-void update_traffic_lights(light_handle_t *traffic_light);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-void update_traffic_lights(light_handle_t *traffic_light)
-{
-  if (traffic_light->counter == 0)
-  {
-    switch (traffic_light->state)
-    {
-    case LED_GREEN:
-      traffic_light->state = LED_YELLOW;
-      traffic_light->counter = YELLOW_TIME;
-      break;
-    case LED_YELLOW:
-      traffic_light->state = LED_RED;
-      traffic_light->counter = RED_TIME;
-      break;
-    case LED_RED:
-      traffic_light->state = LED_GREEN;
-      traffic_light->counter = GREEN_TIME;
-      break;
-    default:
-      break;
-    }
-  }
-  traffic_light->counter--;
-  for (int i = 0; i < 3; i++)
-  {
-    if (i == traffic_light->state)
-    {
-      HAL_GPIO_WritePin(GPIOA, traffic_light->gpio[i], GPIO_PIN_SET);
-    }
-    else
-    {
-      HAL_GPIO_WritePin(GPIOA, traffic_light->gpio[i], GPIO_PIN_RESET);
-    }
-  }
-}
+
 /* USER CODE END 0 */
 
 /**
@@ -130,36 +90,7 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-
-  HAL_TIM_Base_Start_IT(&htim2);
-
-  // G - Y - R
-  lights[0] = (light_handle_t){.counter = GREEN_TIME - 1, .state = LED_GREEN, .gpio = {GPIO_PIN_4, GPIO_PIN_5, GPIO_PIN_6}};
-  lights[1] = (light_handle_t){.counter = GREEN_TIME - 1, .state = LED_GREEN, .gpio = {GPIO_PIN_7, GPIO_PIN_8, GPIO_PIN_9}};
-  lights[2] = (light_handle_t){.counter = RED_TIME - 1, .state = LED_RED, .gpio = {GPIO_PIN_10, GPIO_PIN_11, GPIO_PIN_12}};
-  lights[3] = (light_handle_t){.counter = RED_TIME - 1, .state = LED_RED, .gpio = {GPIO_PIN_13, GPIO_PIN_14, GPIO_PIN_15}};
-  for (int i = 0; i < 4; i++)
-  {
-    for (int j = 0; j < 3; j++)
-    {
-      if (j == lights[i].state)
-      {
-        HAL_GPIO_WritePin(GPIOA, lights[i].gpio[j], GPIO_PIN_SET);
-      }
-      else
-      {
-        HAL_GPIO_WritePin(GPIOA, lights[i].gpio[j], GPIO_PIN_RESET);
-      }
-    }
-  }
-
-  // 7 Segment led
-  seg_7_led_init(&seg7_led_handle1, SEG_7_LED_COMMON_ANODE, GPIOB, (uint32_t[]){GPIO_PIN_0, GPIO_PIN_1, GPIO_PIN_2, GPIO_PIN_3, GPIO_PIN_4, GPIO_PIN_5, GPIO_PIN_6, GPIO_PIN_7});
-  seg_7_led_display(&seg7_led_handle1, lights[0].counter);
-
-  seg_7_led_init(&seg7_led_handle2, SEG_7_LED_COMMON_ANODE, GPIOB, (uint32_t[]){GPIO_PIN_8, GPIO_PIN_9, GPIO_PIN_10, GPIO_PIN_11, GPIO_PIN_12, GPIO_PIN_13, GPIO_PIN_14, GPIO_PIN_15});
-  seg_7_led_display(&seg7_led_handle2, lights[3].counter);
-
+  uint8_t counter = 0;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -167,18 +98,14 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-
-    /* USER CODE BEGIN 3 */
-    if (update_timer)
+    HAL_GPIO_WritePin(GPIOA, gpio_arr[counter], GPIO_PIN_SET);
+    counter++;
+    if (counter >= 12)
     {
-      update_timer = 0;
-      for (int i = 0; i < 4; i++)
-      {
-        update_traffic_lights(&lights[i]);
-      }
-      seg_7_led_display(&seg7_led_handle1, lights[0].counter);
-      seg_7_led_display(&seg7_led_handle2, lights[3].counter);
+      counter = 0;
     }
+    /* USER CODE BEGIN 3 */
+    HAL_Delay(1000);
   }
   /* USER CODE END 3 */
 }
@@ -326,7 +253,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   if (htim->Instance == TIM2)
   {
-    update_timer = 1;
+    // update_timer = 1;
   }
 }
 /* USER CODE END 4 */

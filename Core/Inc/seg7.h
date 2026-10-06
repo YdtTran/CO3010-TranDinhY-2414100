@@ -4,10 +4,10 @@
 #include "stm32f1xx_hal.h"
 
 #define seg7_COMMON_CATHODE 0
-#define seg7_COMMON_ANODE   1
+#define seg7_COMMON_ANODE 1
 
 #define SEG7_COMMON_CATHODE seg7_COMMON_CATHODE
-#define SEG7_COMMON_ANODE   seg7_COMMON_ANODE
+#define SEG7_COMMON_ANODE seg7_COMMON_ANODE
 
 typedef union
 {
@@ -23,18 +23,18 @@ typedef union
         uint8_t b : 1;
         uint8_t a : 1;
     };
-    uint8_t data;
+    uint16_t data;
 } seg7_t;
 
 typedef struct
 {
     seg7_t segments;
     uint8_t com;
-    uint32_t gpio[8];
+    uint16_t gpio[8];
     GPIO_TypeDef *port;
 } seg7_handle_t;
 
-void SEG7Init(seg7_handle_t *led_handle, uint8_t com, GPIO_TypeDef *port, uint32_t gpio[8]);
+void SEG7Init(seg7_handle_t *led_handle, uint8_t com, GPIO_TypeDef *port, uint16_t gpio[8]);
 void SEG7Set_Digit(seg7_handle_t *led_handle, uint8_t digit);
 void SEG7Clear(seg7_handle_t *led_handle);
 

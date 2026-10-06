@@ -21,7 +21,6 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "traffic_light.h"
 #include "seg7.h"
 /* USER CODE END Includes */
 
@@ -44,31 +43,10 @@
 TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
-#define SEG_PORT    GPIOB
-#define EN_PORT     GPIOA
-#define EN0_PIN     GPIO_PIN_5
-#define EN1_PIN     GPIO_PIN_6
-
-/* Common Anode 7-Segment Bitmask Table (0 to 9)
- * '0' = LED ON (Cathode pulled low), '1' = LED OFF
- * Bit 0 = a (PB0), Bit 1 = b (PB1), ..., Bit 6 = g (PB6)
- */
-static const uint8_t seg7_hex_table[10] = {
-    0x40, /* 0: 0b1000000 */
-    0x79, /* 1: 0b1111001 */
-    0x24, /* 2: 0b0100100 */
-    0x30, /* 3: 0b0110000 */
-    0x19, /* 4: 0b0011001 */
-    0x12, /* 5: 0b0010010 */
-    0x02, /* 6: 0b0000010 */
-    0x78, /* 7: 0b1111000 */
-    0x00, /* 8: 0b0000000 */
-    0x10  /* 9: 0b0010000 */
-};
-
-/* Multiplexing state machine variables */
-static volatile uint8_t active_display_state = 0; /* 0: Digit 1 (EN0), 1: Digit 2 (EN1) */
-static volatile uint16_t timer_tick_counter = 0;  /* 10 ms tick counter */
+seg7_handle_t led_handle;
+volatile uint16_t current_digit = 0;
+uint16_t digit_pin[4] = {GPIO_PIN_6, GPIO_PIN_7, GPIO_PIN_8, GPIO_PIN_9};
+uint8_t number[4] = {1, 2, 3, 0};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -76,38 +54,18 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
-void display7SEG(int num);
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-/**
- * @brief  Outputs digit bit pattern to 7-segment lines PB0-PB6.
- * @param  num: Decimal digit to display (0 - 9). Values outside turn off all segments.
- * @note   Active-LOW outputs (Common Anode display).
- */
-void display7SEG(int num)
-{
-  uint8_t pattern = 0x7F; /* Default: all segments OFF (0b01111111) */
 
-  if (num >= 0 && num <= 9)
-  {
-    pattern = seg7_hex_table[num];
-  }
-
-  /* Drive PB0 (SEG0 / a) through PB6 (SEG6 / g) */
-  for (uint8_t i = 0; i < 7; i++)
-  {
-    GPIO_PinState pin_state = (pattern & (1 << i)) ? GPIO_PIN_SET : GPIO_PIN_RESET;
-    HAL_GPIO_WritePin(SEG_PORT, (uint16_t)(1 << i), pin_state);
-  }
-}
 /* USER CODE END 0 */
 
 /**
- * @brief  The application entry point.
- * @retval int
- */
+  * @brief  The application entry point.
+  * @retval int
+  */
 int main(void)
 {
 
@@ -135,18 +93,12 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  /* Ensure digit enables start disabled (HIGH for Active-LOW Common Anode COM) */
-  HAL_GPIO_WritePin(EN_PORT, EN0_PIN | EN1_PIN, GPIO_PIN_SET);
-
-  /* Start TIM2 in Interrupt Mode */
-  if (HAL_TIM_Base_Start_IT(&htim2) != HAL_OK)
-  {
-    Error_Handler();
-  }
+  HAL_TIM_Base_Start_IT(&htim2);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  SEG7Init(&led_handle, seg7_COMMON_ANODE, GPIOB, (uint16_t[8]){GPIO_PIN_0, GPIO_PIN_1, GPIO_PIN_2, GPIO_PIN_3, GPIO_PIN_4, GPIO_PIN_5, GPIO_PIN_6, GPIO_PIN_7});
   while (1)
   {
     /* USER CODE END WHILE */
@@ -157,17 +109,17 @@ int main(void)
 }
 
 /**
- * @brief System Clock Configuration
- * @retval None
- */
+  * @brief System Clock Configuration
+  * @retval None
+  */
 void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
   /** Initializes the RCC Oscillators according to the specified parameters
-   * in the RCC_OscInitTypeDef structure.
-   */
+  * in the RCC_OscInitTypeDef structure.
+  */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
@@ -180,8 +132,9 @@ void SystemClock_Config(void)
   }
 
   /** Initializes the CPU, AHB and APB buses clocks
-   */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+  */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
+                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
@@ -194,10 +147,10 @@ void SystemClock_Config(void)
 }
 
 /**
- * @brief TIM2 Initialization Function
- * @param None
- * @retval None
- */
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
 static void MX_TIM2_Init(void)
 {
 
@@ -214,7 +167,7 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 35999;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 9;
+  htim2.Init.Period = 49;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -235,13 +188,14 @@ static void MX_TIM2_Init(void)
   /* USER CODE BEGIN TIM2_Init 2 */
 
   /* USER CODE END TIM2_Init 2 */
+
 }
 
 /**
- * @brief GPIO Initialization Function
- * @param None
- * @retval None
- */
+  * @brief GPIO Initialization Function
+  * @param None
+  * @retval None
+  */
 static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -255,16 +209,21 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13 | GPIO_PIN_14, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13|GPIO_PIN_14, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7
+                          |GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11
+                          |GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_10
+                          |GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14
+                          |GPIO_PIN_15|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5
+                          |GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : PC13 PC14 */
-  GPIO_InitStruct.Pin = GPIO_PIN_13 | GPIO_PIN_14;
+  GPIO_InitStruct.Pin = GPIO_PIN_13|GPIO_PIN_14;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -273,7 +232,9 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pins : PA4 PA5 PA6 PA7
                            PA8 PA9 PA10 PA11
                            PA12 PA13 PA14 PA15 */
-  GPIO_InitStruct.Pin = GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15;
+  GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7
+                          |GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11
+                          |GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -283,7 +244,10 @@ static void MX_GPIO_Init(void)
                            PB11 PB12 PB13 PB14
                            PB15 PB3 PB4 PB5
                            PB6 PB7 PB8 PB9 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9;
+  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_10
+                          |GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14
+                          |GPIO_PIN_15|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5
+                          |GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -295,55 +259,25 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-/**
- * @brief  Period elapsed callback in non-blocking mode.
- * @param  htim: Pointer to TIM_HandleTypeDef that triggered the interrupt.
- */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   if (htim->Instance == TIM2)
   {
-    /* 10 ms interrupt: count 50 ticks to reach 500 ms (0.5 s) */
-    timer_tick_counter++;
-    if (timer_tick_counter >= 50)
+    for (int i = 0; i < 4; i++)
     {
-      timer_tick_counter = 0;
-
-      if (active_display_state == 0)
-      {
-        /* 1. Turn OFF Digit 2 COM (prevent ghosting) */
-        HAL_GPIO_WritePin(EN_PORT, EN1_PIN, GPIO_PIN_SET);
-
-        /* 2. Output digit "1" pattern to segments PB0-PB6 */
-        display7SEG(1);
-
-        /* 3. Turn ON Digit 1 COM (Active-LOW: 0V activates Common Anode) */
-        HAL_GPIO_WritePin(EN_PORT, EN0_PIN, GPIO_PIN_RESET);
-
-        active_display_state = 1;
-      }
-      else
-      {
-        /* 1. Turn OFF Digit 1 COM (prevent ghosting) */
-        HAL_GPIO_WritePin(EN_PORT, EN0_PIN, GPIO_PIN_SET);
-
-        /* 2. Output digit "2" pattern to segments PB0-PB6 */
-        display7SEG(2);
-
-        /* 3. Turn ON Digit 2 COM (Active-LOW: 0V activates Common Anode) */
-        HAL_GPIO_WritePin(EN_PORT, EN1_PIN, GPIO_PIN_RESET);
-
-        active_display_state = 0;
-      }
+      HAL_GPIO_WritePin(GPIOA, digit_pin[i], GPIO_PIN_SET); // Turn off all digits
     }
+    HAL_GPIO_WritePin(GPIOA, digit_pin[current_digit], GPIO_PIN_RESET); // Turn on the current digit
+    SEG7Set_Digit(&led_handle, number[current_digit]);                  // Set the current digit on the 7-segment display
+    current_digit = (current_digit + 1) % 4;                            // Move to the
   }
 }
 /* USER CODE END 4 */
 
 /**
- * @brief  This function is executed in case of error occurrence.
- * @retval None
- */
+  * @brief  This function is executed in case of error occurrence.
+  * @retval None
+  */
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
@@ -356,12 +290,12 @@ void Error_Handler(void)
 }
 #ifdef USE_FULL_ASSERT
 /**
- * @brief  Reports the name of the source file and the source line number
- *         where the assert_param error has occurred.
- * @param  file: pointer to the source file name
- * @param  line: assert_param error line source number
- * @retval None
- */
+  * @brief  Reports the name of the source file and the source line number
+  *         where the assert_param error has occurred.
+  * @param  file: pointer to the source file name
+  * @param  line: assert_param error line source number
+  * @retval None
+  */
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */

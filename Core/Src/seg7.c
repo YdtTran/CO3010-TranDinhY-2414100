@@ -36,7 +36,7 @@ const uint8_t digit_to_ca[10] = {
  * @param gpio GPIO pins a, b, c, d, e, f, g, dp
  * @retval None
  */
-void SEG7Init(seg7_handle_t *led_handle, uint8_t com, GPIO_TypeDef *port, uint32_t gpio[8])
+void SEG7Init(seg7_handle_t *led_handle, uint8_t com, GPIO_TypeDef *port, uint16_t gpio[8])
 {
     if (led_handle == NULL)
     {

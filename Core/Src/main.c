@@ -31,7 +31,12 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define MATRIX_ROW_PORT GPIOB
+#define MATRIX_COL_PORT GPIOA
+#define DIGIT_PORT      GPIOA
+#define SEG_PORT        GPIOB
+#define LED_D1_PIN      GPIO_PIN_5 // PA5: Active LOW
+#define DOT_PIN         GPIO_PIN_4 // PA4
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -43,10 +48,78 @@
 TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
-seg7_handle_t led_handle;
-volatile uint16_t current_digit = 0;
-uint16_t digit_pin[4] = {GPIO_PIN_6, GPIO_PIN_7, GPIO_PIN_8, GPIO_PIN_9};
-uint8_t number[4] = {1, 2, 3, 0};
+/* Row pins PB8 -> PB15 (Anodes) */
+static const uint16_t matrix_row_pins[8] = {
+    GPIO_PIN_8,  // ROW0
+    GPIO_PIN_9,  // ROW1
+    GPIO_PIN_10, // ROW2
+    GPIO_PIN_11, // ROW3
+    GPIO_PIN_12, // ROW4
+    GPIO_PIN_13, // ROW5
+    GPIO_PIN_14, // ROW6
+    GPIO_PIN_15  // ROW7
+};
+
+/* Column enable pins ENM0 -> ENM7 (ULN2803 inputs on GPIOA) */
+static const uint16_t matrix_col_pins[8] = {
+    GPIO_PIN_2,  // ENM0 -> COL0
+    GPIO_PIN_3,  // ENM1 -> COL1
+    GPIO_PIN_10, // ENM2 -> COL2
+    GPIO_PIN_11, // ENM3 -> COL3
+    GPIO_PIN_12, // ENM4 -> COL4
+    GPIO_PIN_13, // ENM5 -> COL5
+    GPIO_PIN_14, // ENM6 -> COL6
+    GPIO_PIN_15  // ENM7 -> COL7
+};
+
+/* 7-Segment segment pins PB0 -> PB6 (Cathodes for Common Anode) */
+static const uint16_t seg_pins[7] = {
+    GPIO_PIN_0, GPIO_PIN_1, GPIO_PIN_2, GPIO_PIN_3,
+    GPIO_PIN_4, GPIO_PIN_5, GPIO_PIN_6
+};
+
+/* 7-Segment digit enable pins EN0 -> EN3 on GPIOA (Common Anode: Active HIGH) */
+static const uint16_t digit_pins[4] = {
+    GPIO_PIN_6, // EN0
+    GPIO_PIN_7, // EN1
+    GPIO_PIN_8, // EN2
+    GPIO_PIN_9  // EN3
+};
+
+/* Common Anode 7-segment bitmask table (0..9), Active LOW (0 = LED ON, 1 = LED OFF) */
+static const uint8_t seg7_hex_table[10] = {
+    0x40, // 0: 0b1000000
+    0x79, // 1: 0b1111001
+    0x24, // 2: 0b0100100
+    0x30, // 3: 0b0110000
+    0x19, // 4: 0b0011001
+    0x12, // 5: 0b0010010
+    0x02, // 6: 0b0000010
+    0x78, // 7: 0b1111000
+    0x00, // 8: 0b0000000
+    0x10  // 9: 0b0010000
+};
+
+/* Digits to display on the 4 7-segment displays */
+static const uint8_t seg7_digits[4] = {1, 2, 3, 4};
+
+/* 8x8 LED Matrix Heart Bitmap (Column-scanned: bit r = Row r, active HIGH) */
+static const uint8_t matrix_heart_bitmap[8] = {
+    0x0E, // Col 0: 00001110b
+    0x1F, // Col 1: 00011111b
+    0x3F, // Col 2: 00111111b
+    0x7E, // Col 3: 01111110b
+    0x7E, // Col 4: 01111110b
+    0x3F, // Col 5: 00111111b
+    0x1F, // Col 6: 00011111b
+    0x0E  // Col 7: 00001110b
+};
+
+/* Multiplexing and timing tracking variables */
+static volatile uint8_t current_matrix_col = 0;
+static volatile uint8_t current_seg7_digit = 0;
+static volatile uint16_t seg7_timer_counter = 0;
+static volatile uint16_t d1_blink_counter = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -55,11 +128,64 @@ static void MX_GPIO_Init(void);
 static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
+void scan_led_matrix_column(uint8_t col_idx);
+void scan_seg7_digit(uint8_t digit_idx);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+/**
+ * @brief  Scans one column of the 8x8 LED matrix.
+ * @param  col_idx: Column index (0 to 7) to activate.
+ * @note   Active column pin (ENMx) is driven HIGH -> ULN2803 pulls COLx to GND.
+ *         Active row pins (ROWx) are driven HIGH (3.3V) -> LED turns ON.
+ */
+void scan_led_matrix_column(uint8_t col_idx)
+{
+  /* 1. Turn OFF all columns first to prevent ghosting */
+  for (uint8_t i = 0; i < 8; i++)
+  {
+    HAL_GPIO_WritePin(MATRIX_COL_PORT, matrix_col_pins[i], GPIO_PIN_RESET);
+  }
 
+  /* 2. Output row data for the target column */
+  uint8_t row_data = matrix_heart_bitmap[col_idx];
+  for (uint8_t r = 0; r < 8; r++)
+  {
+    GPIO_PinState pin_state = (row_data & (1 << r)) ? GPIO_PIN_SET : GPIO_PIN_RESET;
+    HAL_GPIO_WritePin(MATRIX_ROW_PORT, matrix_row_pins[r], pin_state);
+  }
+
+  /* 3. Turn ON the target column (ULN2803 sinks current) */
+  HAL_GPIO_WritePin(MATRIX_COL_PORT, matrix_col_pins[col_idx], GPIO_PIN_SET);
+}
+
+/**
+ * @brief  Scans one digit of the 4-digit 7-segment display.
+ * @param  digit_idx: Digit index (0 to 3) to activate.
+ * @note   Digit enables EN0..EN3 are Active HIGH (direct to Common Anode).
+ *         Segment lines PB0..PB6 are Active LOW (Cathodes).
+ */
+void scan_seg7_digit(uint8_t digit_idx)
+{
+  /* 1. Turn OFF all digits first to prevent ghosting */
+  for (uint8_t i = 0; i < 4; i++)
+  {
+    HAL_GPIO_WritePin(DIGIT_PORT, digit_pins[i], GPIO_PIN_RESET);
+  }
+
+  /* 2. Output digit segment pattern */
+  uint8_t num = seg7_digits[digit_idx];
+  uint8_t pattern = (num <= 9) ? seg7_hex_table[num] : 0x7F;
+  for (uint8_t s = 0; s < 7; s++)
+  {
+    GPIO_PinState seg_state = (pattern & (1 << s)) ? GPIO_PIN_SET : GPIO_PIN_RESET;
+    HAL_GPIO_WritePin(SEG_PORT, seg_pins[s], seg_state);
+  }
+
+  /* 3. Turn ON target digit enable */
+  HAL_GPIO_WritePin(DIGIT_PORT, digit_pins[digit_idx], GPIO_PIN_SET);
+}
 /* USER CODE END 0 */
 
 /**
@@ -93,17 +219,23 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  HAL_TIM_Base_Start_IT(&htim2);
+  /* Start TIM2 in Interrupt mode (1 ms tick) */
+  if (HAL_TIM_Base_Start_IT(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  SEG7Init(&led_handle, seg7_COMMON_ANODE, GPIOB, (uint16_t[8]){GPIO_PIN_0, GPIO_PIN_1, GPIO_PIN_2, GPIO_PIN_3, GPIO_PIN_4, GPIO_PIN_5, GPIO_PIN_6, GPIO_PIN_7});
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+    /* Periodic display scanning and LED blinking are driven asynchronously
+     * inside HAL_TIM_PeriodElapsedCallback to ensure smooth, non-blocking operation.
+     */
   }
   /* USER CODE END 3 */
 }
@@ -167,7 +299,7 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 35999;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 49;
+  htim2.Init.Period = 0;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -200,7 +332,9 @@ static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
   /* USER CODE BEGIN MX_GPIO_Init_1 */
-
+  /* Enable AFIO clock and disable JTAG/SWD to release PA13, PA14, PA15, PB3, PB4 */
+  __HAL_RCC_AFIO_CLK_ENABLE();
+  __HAL_AFIO_REMAP_SWJ_DISABLE();
   /* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
@@ -254,7 +388,29 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
+  /* Initialize PA2 & PA3 (ENM0, ENM1) which are missing from default configuration */
+  GPIO_InitStruct.Pin = GPIO_PIN_2 | GPIO_PIN_3;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+  /* Set default safe pin states:
+   * - Columns ENM0..ENM7: LOW (ULN2803 is OFF)
+   * - Rows ROW0..ROW7: LOW (Matrix LEDs OFF)
+   * - Digit enables EN0..EN3: LOW (7-seg OFF)
+   * - Segments SEG0..SEG6: HIGH (Common Anode segments OFF)
+   * - Single LED D1: HIGH (Active LOW -> D1 is OFF)
+   * - Dot: HIGH (OFF)
+   */
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_6 | GPIO_PIN_7 |
+                           GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11 |
+                           GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4 | GPIO_PIN_5, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3 |
+                           GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11 |
+                           GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15, GPIO_PIN_RESET);
   /* USER CODE END MX_GPIO_Init_2 */
 }
 
@@ -263,13 +419,26 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   if (htim->Instance == TIM2)
   {
-    for (int i = 0; i < 4; i++)
+    /* 1. Matrix 8x8 Column Scanning (1 ms per column -> 8 ms frame = 125 Hz) */
+    scan_led_matrix_column(current_matrix_col);
+    current_matrix_col = (current_matrix_col + 1) % 8;
+
+    /* 2. 7-Segment Multiplexing (every 2 ms -> 8 ms frame = 125 Hz) */
+    seg7_timer_counter++;
+    if (seg7_timer_counter >= 2)
     {
-      HAL_GPIO_WritePin(GPIOA, digit_pin[i], GPIO_PIN_SET); // Turn off all digits
+      seg7_timer_counter = 0;
+      scan_seg7_digit(current_seg7_digit);
+      current_seg7_digit = (current_seg7_digit + 1) % 4;
     }
-    HAL_GPIO_WritePin(GPIOA, digit_pin[current_digit], GPIO_PIN_RESET); // Turn on the current digit
-    SEG7Set_Digit(&led_handle, number[current_digit]);                  // Set the current digit on the 7-segment display
-    current_digit = (current_digit + 1) % 4;                            // Move to the
+
+    /* 3. Single LED D1 Blinking (Toggle every 500 ms) */
+    d1_blink_counter++;
+    if (d1_blink_counter >= 500)
+    {
+      d1_blink_counter = 0;
+      HAL_GPIO_TogglePin(GPIOA, LED_D1_PIN);
+    }
   }
 }
 /* USER CODE END 4 */

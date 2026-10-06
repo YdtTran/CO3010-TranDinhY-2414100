@@ -18,13 +18,11 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "traffic_light.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#define GREEN_TIME 3
-#define YELLOW_TIME 2
-#define RED_TIME 5
+#include "traffic_light.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -34,7 +32,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-
+#define GREEN_TIME 3
+#define YELLOW_TIME 2
+#define RED_TIME 5
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -43,7 +43,6 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
 light_handle_t lights[4];
@@ -53,9 +52,7 @@ uint8_t update_timer = 0;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
-static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
 void update_traffic_lights(light_handle_t *traffic_light);
 /* USER CODE END PFP */
 
@@ -127,16 +124,13 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
-  HAL_TIM_Base_Start_IT(&htim2);
-
   // G - Y - R
-  lights[0] = (light_handle_t){.counter = GREEN_TIME - 1, .state = LED_GREEN, .gpio = {GPIO_PIN_4, GPIO_PIN_5, GPIO_PIN_6}};
-  lights[1] = (light_handle_t){.counter = GREEN_TIME - 1, .state = LED_GREEN, .gpio = {GPIO_PIN_7, GPIO_PIN_8, GPIO_PIN_9}};
-  lights[2] = (light_handle_t){.counter = RED_TIME - 1, .state = LED_RED, .gpio = {GPIO_PIN_10, GPIO_PIN_11, GPIO_PIN_12}};
-  lights[3] = (light_handle_t){.counter = RED_TIME - 1, .state = LED_RED, .gpio = {GPIO_PIN_13, GPIO_PIN_14, GPIO_PIN_15}};
+  lights[0] = (light_handle_t){.counter = GREEN_TIME, .state = LED_GREEN, .gpio = {GPIO_PIN_4, GPIO_PIN_5, GPIO_PIN_6}};
+  lights[1] = (light_handle_t){.counter = GREEN_TIME, .state = LED_GREEN, .gpio = {GPIO_PIN_7, GPIO_PIN_8, GPIO_PIN_9}};
+  lights[2] = (light_handle_t){.counter = RED_TIME, .state = LED_RED, .gpio = {GPIO_PIN_10, GPIO_PIN_11, GPIO_PIN_12}};
+  lights[3] = (light_handle_t){.counter = RED_TIME, .state = LED_RED, .gpio = {GPIO_PIN_13, GPIO_PIN_14, GPIO_PIN_15}};
   for (int i = 0; i < 4; i++)
   {
     for (int j = 0; j < 3; j++)
@@ -160,19 +154,18 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    if (update_timer)
+
+    // Update the traffic lights
+    // doing for a single light for now
+    for (int i = 0; i < 4; i++)
     {
-      update_timer = 0;
-      // Update the traffic lights
-      // doing for a single light for now
-      for (int i = 0; i < 4; i++)
-      {
-        update_traffic_lights(&lights[i]);
-      }
+      update_traffic_lights(&lights[i]);
     }
-    /* USER CODE END 3 */
+    HAL_Delay(1000);
   }
+  /* USER CODE END 3 */
 }
+
 /**
  * @brief System Clock Configuration
  * @retval None
@@ -208,50 +201,6 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-}
-
-/**
- * @brief TIM2 Initialization Function
- * @param None
- * @retval None
- */
-static void MX_TIM2_Init(void)
-{
-
-  /* USER CODE BEGIN TIM2_Init 0 */
-
-  /* USER CODE END TIM2_Init 0 */
-
-  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
-  TIM_MasterConfigTypeDef sMasterConfig = {0};
-
-  /* USER CODE BEGIN TIM2_Init 1 */
-
-  /* USER CODE END TIM2_Init 1 */
-  htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 1000;
-  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 36000;
-  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN TIM2_Init 2 */
-
-  /* USER CODE END TIM2_Init 2 */
 }
 
 /**
@@ -298,13 +247,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
-{
-  if (htim->Instance == TIM2)
-  {
-    update_timer = 1;
-  }
-}
+
 /* USER CODE END 4 */
 
 /**

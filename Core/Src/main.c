@@ -38,6 +38,7 @@
 #define LED_D1_PIN GPIO_PIN_5 // PA5: Active LOW
 #define DOT_PIN GPIO_PIN_4    // PA4
 #define LED_NUM 4
+#define DOT GPIO_PIN_4
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -106,7 +107,10 @@ static volatile uint8_t current_matrix_col = 0;
 static volatile uint8_t current_seg7_digit = 0;
 static volatile uint16_t seg7_timer_counter = 0;
 static volatile uint16_t d1_blink_counter = 0;
+static volatile uint8_t counter = 0;
+static volatile uint8_t dot_counter = 2;
 static seg7_handle_t seg7_handler = {0}; // Current segment states for 7-segment display
+int hour = 15, minute = 8, second = 50;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -117,6 +121,12 @@ static void MX_TIM2_Init(void);
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
 void scan_led_matrix_column(uint8_t col_idx);
 void scan_seg7_digit(uint8_t digit_idx);
+void update7SEG(int index);
+void updateClockBuffer();
+/* USER CODE END PFP */
+
+/* Private user code ---------------------------------------------------------*/
+/* USER CODE BEGIN 0 */
 void update7SEG(int index)
 {
   for (uint8_t i = 0; i < LED_NUM; i++)
@@ -131,11 +141,14 @@ void update7SEG(int index)
 
   SEG7Set_Digit(&seg7_handler, led_buffer[index]);
 }
-/* USER CODE END PFP */
 
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
-
+void updateClockBuffer()
+{
+  led_buffer[0] = hour / 10;
+  led_buffer[1] = hour - 10 * led_buffer[0];
+  led_buffer[2] = minute / 10;
+  led_buffer[3] = minute - 10 * led_buffer[2];
+}
 /* USER CODE END 0 */
 
 /**
@@ -179,14 +192,33 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   SEG7Init(&seg7_handler, SEG7_COMMON_ANODE, GPIOB, seg_pins);
+  for (uint8_t i = 0; i < LED_NUM; i++)
+  {
+    update7SEG(i);
+  }
+
   while (1)
   {
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-    /* Periodic display scanning and LED blinking are driven asynchronously
-     * inside HAL_TIM_PeriodElapsedCallback to ensure smooth, non-blocking operation.
-     */
+    second++;
+    if (second >= 60)
+    {
+      second = 0;
+      minute++;
+    }
+    if (minute >= 60)
+    {
+      minute = 0;
+      hour++;
+    }
+    if (hour >= 24)
+    {
+      hour = 0;
+    }
+    updateClockBuffer();
+    HAL_Delay(1000);
   }
   /* USER CODE END 3 */
 }
@@ -249,7 +281,7 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 35999;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 499;
+  htim2.Init.Period = 249;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -353,14 +385,17 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-  static uint8_t counter = 0;
-  static uint8_t back = 0;
+
   if (htim->Instance == TIM2)
   {
     update7SEG(counter);
-    led_buffer[counter] = back;
     counter = (counter + 1) % LED_NUM;
-    back = (back + 1) % 10;
+    dot_counter--;
+    if (dot_counter > 0)
+    {
+      HAL_GPIO_TogglePin(GPIOA, DOT);
+      dot_counter = 2;
+    }
   }
 }
 /* USER CODE END 4 */

@@ -3,11 +3,8 @@
 
 #include "stm32f1xx_hal.h"
 
-#define seg7_COMMON_CATHODE 0
-#define seg7_COMMON_ANODE 1
-
-#define SEG7_COMMON_CATHODE seg7_COMMON_CATHODE
-#define SEG7_COMMON_ANODE seg7_COMMON_ANODE
+#define SEG7_COMMON_CATHODE 0
+#define SEG7_COMMON_ANODE 1
 
 typedef union
 {

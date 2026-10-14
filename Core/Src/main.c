@@ -33,10 +33,10 @@
 /* USER CODE BEGIN PD */
 #define MATRIX_ROW_PORT GPIOB
 #define MATRIX_COL_PORT GPIOA
-#define DIGIT_PORT      GPIOA
-#define SEG_PORT        GPIOB
-#define LED_D1_PIN      GPIO_PIN_5 // PA5: Active LOW
-#define DOT_PIN         GPIO_PIN_4 // PA4
+#define DIGIT_PORT GPIOA
+#define SEG_PORT GPIOB
+#define LED_D1_PIN GPIO_PIN_5 // PA5: Active LOW
+#define DOT_PIN GPIO_PIN_4    // PA4
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -49,7 +49,7 @@ TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
 /* Row pins PB8 -> PB15 (Anodes) */
-static const uint16_t matrix_row_pins[8] = {
+static uint16_t matrix_row_pins[8] = {
     GPIO_PIN_8,  // ROW0
     GPIO_PIN_9,  // ROW1
     GPIO_PIN_10, // ROW2
@@ -61,7 +61,7 @@ static const uint16_t matrix_row_pins[8] = {
 };
 
 /* Column enable pins ENM0 -> ENM7 (ULN2803 inputs on GPIOA) */
-static const uint16_t matrix_col_pins[8] = {
+static uint16_t matrix_col_pins[8] = {
     GPIO_PIN_2,  // ENM0 -> COL0
     GPIO_PIN_3,  // ENM1 -> COL1
     GPIO_PIN_10, // ENM2 -> COL2
@@ -72,39 +72,24 @@ static const uint16_t matrix_col_pins[8] = {
     GPIO_PIN_15  // ENM7 -> COL7
 };
 
-/* 7-Segment segment pins PB0 -> PB6 (Cathodes for Common Anode) */
-static const uint16_t seg_pins[7] = {
+/* 7-Segment segment pins PB0 -> PB7 (Cathodes for Common Anode) */
+static uint16_t seg_pins[8] = {
     GPIO_PIN_0, GPIO_PIN_1, GPIO_PIN_2, GPIO_PIN_3,
-    GPIO_PIN_4, GPIO_PIN_5, GPIO_PIN_6
-};
+    GPIO_PIN_4, GPIO_PIN_5, GPIO_PIN_6, GPIO_PIN_7};
 
 /* 7-Segment digit enable pins EN0 -> EN3 on GPIOA (Common Anode: Active HIGH) */
-static const uint16_t digit_pins[4] = {
+static uint16_t digit_pins[4] = {
     GPIO_PIN_6, // EN0
     GPIO_PIN_7, // EN1
     GPIO_PIN_8, // EN2
     GPIO_PIN_9  // EN3
 };
 
-/* Common Anode 7-segment bitmask table (0..9), Active LOW (0 = LED ON, 1 = LED OFF) */
-static const uint8_t seg7_hex_table[10] = {
-    0x40, // 0: 0b1000000
-    0x79, // 1: 0b1111001
-    0x24, // 2: 0b0100100
-    0x30, // 3: 0b0110000
-    0x19, // 4: 0b0011001
-    0x12, // 5: 0b0010010
-    0x02, // 6: 0b0000010
-    0x78, // 7: 0b1111000
-    0x00, // 8: 0b0000000
-    0x10  // 9: 0b0010000
-};
-
 /* Digits to display on the 4 7-segment displays */
-static const uint8_t seg7_digits[4] = {1, 2, 3, 4};
+static uint8_t seg7_digits[4] = {1, 2, 3, 4};
 
 /* 8x8 LED Matrix Heart Bitmap (Column-scanned: bit r = Row r, active HIGH) */
-static const uint8_t matrix_heart_bitmap[8] = {
+static uint8_t matrix_heart_bitmap[8] = {
     0x0E, // Col 0: 00001110b
     0x1F, // Col 1: 00011111b
     0x3F, // Col 2: 00111111b
@@ -120,6 +105,7 @@ static volatile uint8_t current_matrix_col = 0;
 static volatile uint8_t current_seg7_digit = 0;
 static volatile uint16_t seg7_timer_counter = 0;
 static volatile uint16_t d1_blink_counter = 0;
+static seg7_handle_t seg7_segments = {0}; // Current segment states for 7-segment display
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -134,64 +120,13 @@ void scan_seg7_digit(uint8_t digit_idx);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-/**
- * @brief  Scans one column of the 8x8 LED matrix.
- * @param  col_idx: Column index (0 to 7) to activate.
- * @note   Active column pin (ENMx) is driven HIGH -> ULN2803 pulls COLx to GND.
- *         Active row pins (ROWx) are driven HIGH (3.3V) -> LED turns ON.
- */
-void scan_led_matrix_column(uint8_t col_idx)
-{
-  /* 1. Turn OFF all columns first to prevent ghosting */
-  for (uint8_t i = 0; i < 8; i++)
-  {
-    HAL_GPIO_WritePin(MATRIX_COL_PORT, matrix_col_pins[i], GPIO_PIN_RESET);
-  }
 
-  /* 2. Output row data for the target column */
-  uint8_t row_data = matrix_heart_bitmap[col_idx];
-  for (uint8_t r = 0; r < 8; r++)
-  {
-    GPIO_PinState pin_state = (row_data & (1 << r)) ? GPIO_PIN_SET : GPIO_PIN_RESET;
-    HAL_GPIO_WritePin(MATRIX_ROW_PORT, matrix_row_pins[r], pin_state);
-  }
-
-  /* 3. Turn ON the target column (ULN2803 sinks current) */
-  HAL_GPIO_WritePin(MATRIX_COL_PORT, matrix_col_pins[col_idx], GPIO_PIN_SET);
-}
-
-/**
- * @brief  Scans one digit of the 4-digit 7-segment display.
- * @param  digit_idx: Digit index (0 to 3) to activate.
- * @note   Digit enables EN0..EN3 are Active HIGH (direct to Common Anode).
- *         Segment lines PB0..PB6 are Active LOW (Cathodes).
- */
-void scan_seg7_digit(uint8_t digit_idx)
-{
-  /* 1. Turn OFF all digits first to prevent ghosting */
-  for (uint8_t i = 0; i < 4; i++)
-  {
-    HAL_GPIO_WritePin(DIGIT_PORT, digit_pins[i], GPIO_PIN_RESET);
-  }
-
-  /* 2. Output digit segment pattern */
-  uint8_t num = seg7_digits[digit_idx];
-  uint8_t pattern = (num <= 9) ? seg7_hex_table[num] : 0x7F;
-  for (uint8_t s = 0; s < 7; s++)
-  {
-    GPIO_PinState seg_state = (pattern & (1 << s)) ? GPIO_PIN_SET : GPIO_PIN_RESET;
-    HAL_GPIO_WritePin(SEG_PORT, seg_pins[s], seg_state);
-  }
-
-  /* 3. Turn ON target digit enable */
-  HAL_GPIO_WritePin(DIGIT_PORT, digit_pins[digit_idx], GPIO_PIN_SET);
-}
 /* USER CODE END 0 */
 
 /**
-  * @brief  The application entry point.
-  * @retval int
-  */
+ * @brief  The application entry point.
+ * @retval int
+ */
 int main(void)
 {
 
@@ -228,6 +163,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+  SEG7Init(&seg7_segments, SEG7_COMMON_ANODE, GPIOB, seg_pins);
   while (1)
   {
     /* USER CODE END WHILE */
@@ -241,17 +177,17 @@ int main(void)
 }
 
 /**
-  * @brief System Clock Configuration
-  * @retval None
-  */
+ * @brief System Clock Configuration
+ * @retval None
+ */
 void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
   /** Initializes the RCC Oscillators according to the specified parameters
-  * in the RCC_OscInitTypeDef structure.
-  */
+   * in the RCC_OscInitTypeDef structure.
+   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
@@ -264,9 +200,8 @@ void SystemClock_Config(void)
   }
 
   /** Initializes the CPU, AHB and APB buses clocks
-  */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+   */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
@@ -279,10 +214,10 @@ void SystemClock_Config(void)
 }
 
 /**
-  * @brief TIM2 Initialization Function
-  * @param None
-  * @retval None
-  */
+ * @brief TIM2 Initialization Function
+ * @param None
+ * @retval None
+ */
 static void MX_TIM2_Init(void)
 {
 
@@ -299,7 +234,7 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 35999;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 0;
+  htim2.Init.Period = 499;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
@@ -320,14 +255,13 @@ static void MX_TIM2_Init(void)
   /* USER CODE BEGIN TIM2_Init 2 */
 
   /* USER CODE END TIM2_Init 2 */
-
 }
 
 /**
-  * @brief GPIO Initialization Function
-  * @param None
-  * @retval None
-  */
+ * @brief GPIO Initialization Function
+ * @param None
+ * @retval None
+ */
 static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -343,32 +277,26 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13|GPIO_PIN_14, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13 | GPIO_PIN_14, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7
-                          |GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11
-                          |GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_10
-                          |GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14
-                          |GPIO_PIN_15|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5
-                          |GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : PC13 PC14 */
-  GPIO_InitStruct.Pin = GPIO_PIN_13|GPIO_PIN_14;
+  GPIO_InitStruct.Pin = GPIO_PIN_13 | GPIO_PIN_14;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA4 PA5 PA6 PA7
-                           PA8 PA9 PA10 PA11
-                           PA12 PA13 PA14 PA15 */
-  GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_5|GPIO_PIN_6|GPIO_PIN_7
-                          |GPIO_PIN_8|GPIO_PIN_9|GPIO_PIN_10|GPIO_PIN_11
-                          |GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15;
+  /*Configure GPIO pins : PA2 PA3 PA4 PA5
+                           PA6 PA7 PA8 PA9
+                           PA10 PA11 PA12 PA13
+                           PA14 PA15 */
+  GPIO_InitStruct.Pin = GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -378,10 +306,7 @@ static void MX_GPIO_Init(void)
                            PB11 PB12 PB13 PB14
                            PB15 PB3 PB4 PB5
                            PB6 PB7 PB8 PB9 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_10
-                          |GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14
-                          |GPIO_PIN_15|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5
-                          |GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9;
+  GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -403,50 +328,36 @@ static void MX_GPIO_Init(void)
    * - Single LED D1: HIGH (Active LOW -> D1 is OFF)
    * - Dot: HIGH (OFF)
    */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_6 | GPIO_PIN_7 |
-                           GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11 |
-                           GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15, GPIO_PIN_RESET);
   HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4 | GPIO_PIN_5, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3 |
-                           GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11 |
-                           GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15, GPIO_PIN_RESET);
   /* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
+  static uint8_t counter = 0;
   if (htim->Instance == TIM2)
   {
-    /* 1. Matrix 8x8 Column Scanning (1 ms per column -> 8 ms frame = 125 Hz) */
-    scan_led_matrix_column(current_matrix_col);
-    current_matrix_col = (current_matrix_col + 1) % 8;
-
-    /* 2. 7-Segment Multiplexing (every 2 ms -> 8 ms frame = 125 Hz) */
-    seg7_timer_counter++;
-    if (seg7_timer_counter >= 2)
+    // Set PNP enable pins LOW to turn off all columns before scanning the next one
+    for (int i = 0; i < 4; i++)
     {
-      seg7_timer_counter = 0;
-      scan_seg7_digit(current_seg7_digit);
-      current_seg7_digit = (current_seg7_digit + 1) % 4;
+      HAL_GPIO_WritePin(DIGIT_PORT, digit_pins[i], GPIO_PIN_SET);
     }
 
-    /* 3. Single LED D1 Blinking (Toggle every 500 ms) */
-    d1_blink_counter++;
-    if (d1_blink_counter >= 500)
-    {
-      d1_blink_counter = 0;
-      HAL_GPIO_TogglePin(GPIOA, LED_D1_PIN);
-    }
+    HAL_GPIO_WritePin(DIGIT_PORT, digit_pins[counter], GPIO_PIN_RESET);
+    SEG7Set_Digit(&seg7_segments, counter + 1);
+    counter = (counter + 1) % 2;
   }
 }
 /* USER CODE END 4 */
 
 /**
-  * @brief  This function is executed in case of error occurrence.
-  * @retval None
-  */
+ * @brief  This function is executed in case of error occurrence.
+ * @retval None
+ */
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
@@ -459,12 +370,12 @@ void Error_Handler(void)
 }
 #ifdef USE_FULL_ASSERT
 /**
-  * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
-  * @param  file: pointer to the source file name
-  * @param  line: assert_param error line source number
-  * @retval None
-  */
+ * @brief  Reports the name of the source file and the source line number
+ *         where the assert_param error has occurred.
+ * @param  file: pointer to the source file name
+ * @param  line: assert_param error line source number
+ * @retval None
+ */
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */

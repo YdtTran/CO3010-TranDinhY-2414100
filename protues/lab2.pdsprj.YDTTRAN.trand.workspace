@@ -3,12 +3,13 @@
  <FRAME activewindow="0">
   <PLACEMENT>2c0000000200000003000000fffffffffffffffffffffffffffffffff9ffffff0d0000003f040000fd030000</PLACEMENT>
   <WINDOW type="default" module="ISIS">
-   <editor metric="0" gridmajor="25400000" mode="00000000" zoom="0" scale="47" flipped="0" gridminor="508000" gridmode="32" snapidx="2" snap="254000" xcursor="0" orgmode="0" snaprange="270212">
+   <editor metric="0" gridmajor="2540000" mode="00000000" zoom="0" scale="132" flipped="0" gridminor="254000" gridmode="32" snapidx="2" snap="254000" xcursor="16" orgmode="0" snaprange="127000">
     <world y1="-8890000" x1="-12700000" y2="8890000" x2="12700000"/>
-    <centre x="4826000" y="5080000"/>
+    <centre x="-5334000" y="1524000"/>
     <origin x="0" y="0"/>
    </editor>
   </WINDOW>
+  <WINDOW type="default" module="DXP"/>
  </FRAME>
  <MODULE name="ARES">
   <editor metric="0" gridmajor="0" mode="00000000" zoom="10" scale="10" flipped="0" gridminor="0" gridmode="32" snapidx="3" snap="0" xcursor="0" orgmode="0" snaprange="0">
@@ -18,9 +19,9 @@
   </editor>
  </MODULE>
  <MODULE name="ISIS">
-  <editor metric="0" gridmajor="25400000" mode="00000000" zoom="0" scale="47" flipped="0" gridminor="508000" gridmode="32" snapidx="2" snap="254000" xcursor="0" orgmode="0" snaprange="270212">
+  <editor metric="0" gridmajor="2540000" mode="00000000" zoom="0" scale="132" flipped="0" gridminor="254000" gridmode="32" snapidx="2" snap="254000" xcursor="16" orgmode="0" snaprange="127000">
    <world y1="-8890000" x1="-12700000" y2="8890000" x2="12700000"/>
-   <centre x="4826000" y="5080000"/>
+   <centre x="-5334000" y="1524000"/>
    <origin x="0" y="0"/>
   </editor>
  </MODULE>
@@ -31,6 +32,7 @@
      <ITEM name="Message Column Width">-22</ITEM>
      <ITEM name="ShowGrid">No</ITEM>
      <ITEM name="Source Column Width">100</ITEM>
+     <ITEM name="Time Column Width">120</ITEM>
      <ITEM name="Version">100</ITEM>
     </PROPERTIES>
    </POPUP>
@@ -383,16 +385,16 @@
      <ITEM name="TopLineAddress">E0000000</ITEM>
     </PROPERTIES>
    </POPUP>
-   <POPUP w="600" x="738" flags="0000000b" y="632" h="400" pid="100" iid="1">
+   <POPUP w="600" x="922" flags="0000000a" y="430" h="400" pid="100" iid="1">
     <PROPERTIES/>
    </POPUP>
-   <POPUP w="300" x="758" flags="0000000b" y="732" h="300" pid="101" iid="1">
+   <POPUP w="300" x="931" flags="0000000a" y="673" h="300" pid="101" iid="1">
     <PROPERTIES>
      <ITEM name="Address Column Width">100</ITEM>
      <ITEM name="AutoResize">No</ITEM>
      <ITEM name="Gridlines">Yes</ITEM>
      <ITEM name="Name Column Width">100</ITEM>
-     <ITEM name="Previous Value Column Width">100</ITEM>
+     <ITEM name="Previous Value Column Width">-102</ITEM>
      <ITEM name="ShowAddresses">Yes</ITEM>
      <ITEM name="ShowGlobals">Yes</ITEM>
      <ITEM name="ShowPreviousValues">Yes</ITEM>

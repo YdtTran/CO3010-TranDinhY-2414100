@@ -71,7 +71,7 @@ void SEG7Set_Digit(seg7_handle_t *led_handle, uint8_t digit)
         return; // Invalid or blank digit
     }
 
-    if (led_handle->com == seg7_COMMON_CATHODE)
+    if (led_handle->com == SEG7_COMMON_CATHODE)
     {
         // Common Cathode
         led_handle->segments.data = digit_to_cc[digit];
@@ -109,8 +109,8 @@ void SEG7Clear(seg7_handle_t *led_handle)
 
     // In Common Anode (active LOW): driving pins HIGH (SET) turns off segments.
     // In Common Cathode (active HIGH): driving pins LOW (RESET) turns off segments.
-    GPIO_PinState off_state = (led_handle->com == seg7_COMMON_ANODE) ? GPIO_PIN_SET : GPIO_PIN_RESET;
-    led_handle->segments.data = (led_handle->com == seg7_COMMON_ANODE) ? 0xFF : 0x00;
+    GPIO_PinState off_state = (led_handle->com == SEG7_COMMON_ANODE) ? GPIO_PIN_SET : GPIO_PIN_RESET;
+    led_handle->segments.data = (led_handle->com == SEG7_COMMON_ANODE) ? 0xFF : 0x00;
 
     for (int i = 0; i < 8; i++)
     {

@@ -41,6 +41,7 @@
 #define DOT GPIO_PIN_4
 #define TICK_INTERVAL_MS 10
 #define SOFT_TIMER_NUM_MAX 10
+#define MAX_LED_MATRIX 8
 
 /* USER CODE END PD */
 
@@ -94,15 +95,15 @@ static uint16_t digit_en_pins[4] = {
 static uint8_t led_buffer[4] = {1, 2, 3, 0};
 
 /* 8x8 LED Matrix Heart Bitmap (Column-scanned: bit r = Row r, active HIGH) */
-static uint8_t matrix_heart_bitmap[8] = {
-    0x0E, // Col 0: 00001110b
-    0x1F, // Col 1: 00011111b
-    0x3F, // Col 2: 00111111b
-    0x7E, // Col 3: 01111110b
-    0x7E, // Col 4: 01111110b
-    0x3F, // Col 5: 00111111b
-    0x1F, // Col 6: 00011111b
-    0x0E  // Col 7: 00001110b
+static uint8_t matrix_bitmap[8] = {
+    0x00, // Col 0: 00000000
+    0xFC, // Col 1: 11111100
+    0x12, // Col 2: 00010010
+    0x11, // Col 3: 00010001
+    0x11, // Col 4: 00010001
+    0x12, // Col 5: 00010010
+    0xFC, // Col 6: 11111100
+    0x00  // Col 7: 00000000
 };
 
 /* Multiplexing and timing tracking variables */
@@ -127,10 +128,11 @@ void setTimer(uint8_t timer_index, uint16_t duration_ms);
 void timerRun(void);
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
-void scan_led_matrix_column(uint8_t col_idx);
-void scan_seg7_digit(uint8_t digit_idx);
 void update7SEG(int index);
 void updateClockBuffer();
+void updateMatrixRows(uint8_t col_index);
+void updateLedMatrix(uint8_t index);
+void clearMatrix();
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -178,12 +180,88 @@ void updateClockBuffer()
   led_buffer[2] = minute / 10;
   led_buffer[3] = minute - 10 * led_buffer[2];
 }
+
+// Use for column scanning
+
+void updateMatrixRows(uint8_t col_index)
+{
+  if (col_index >= MAX_LED_MATRIX)
+    return;
+
+  // Turn off all columns first
+  clearMatrix();
+
+  // Set the rows based on the bitmap for the current column
+  HAL_GPIO_WritePin(MATRIX_COL_PORT, matrix_col_pins[col_index], GPIO_PIN_RESET);
+  uint8_t row_data = matrix_bitmap[col_index];
+  for (uint8_t row = 0; row < MAX_LED_MATRIX; row++)
+  {
+    GPIO_PinState pin_state = (row_data & (1 << row)) ? GPIO_PIN_RESET : GPIO_PIN_SET;
+    HAL_GPIO_WritePin(MATRIX_ROW_PORT, matrix_row_pins[row], pin_state);
+  }
+
+  // Enable the current column
+}
+
+void clearMatrix()
+{
+  for (uint8_t i = 0; i < MAX_LED_MATRIX; i++)
+  {
+    HAL_GPIO_WritePin(MATRIX_COL_PORT, matrix_col_pins[i], GPIO_PIN_SET);
+  }
+  for (uint8_t row = 0; row < MAX_LED_MATRIX; row++)
+  {
+    HAL_GPIO_WritePin(MATRIX_ROW_PORT, matrix_row_pins[row], GPIO_PIN_SET);
+  }
+}
+
+void updateLedMatrix(uint8_t index)
+{
+  switch (index)
+  {
+  case 0:
+    updateMatrixRows(0);
+    break;
+
+  case 1:
+    updateMatrixRows(1);
+    break;
+
+  case 2:
+    updateMatrixRows(2);
+    break;
+
+  case 3:
+    updateMatrixRows(3);
+    break;
+
+  case 4:
+    updateMatrixRows(4);
+    break;
+
+  case 5:
+    updateMatrixRows(5);
+    break;
+
+  case 6:
+    updateMatrixRows(6);
+    break;
+
+  case 7:
+    updateMatrixRows(7);
+    break;
+
+  default:
+    break;
+  }
+}
+
 /* USER CODE END 0 */
 
 /**
-  * @brief  The application entry point.
-  * @retval int
-  */
+ * @brief  The application entry point.
+ * @retval int
+ */
 int main(void)
 {
 
@@ -222,15 +300,16 @@ int main(void)
   /* USER CODE BEGIN WHILE */
 
   SEG7Init(&seg7_handler, SEG7_COMMON_ANODE, SEG_PORT, seg_pins);
-
   for (uint8_t i = 0; i < SOFT_TIMER_NUM_MAX; i++)
   {
     setTimer(i, 0); // Reset all software timers to 0
   }
+  clearMatrix();
 
   setTimer(0, 1000); // Set timer 0 for 1 second
   setTimer(1, 250);
   setTimer(2, 500); // Set timer 1 for 500 ms
+  setTimer(3, 50);  // Set timer 2 for 1 second
   while (1)
   {
     /* USER CODE END WHILE */
@@ -256,36 +335,50 @@ int main(void)
         }
       }
       updateClockBuffer();
+      // shift right the bitmap
+      uint8_t tmp = matrix_bitmap[7];
+      for (uint8_t i = 7; i > 0; i--)
+      {
+        matrix_bitmap[i] = matrix_bitmap[i - 1];
+      }
+      matrix_bitmap[0] = tmp;
     }
     if (timer_flag[1])
     {
-      update7SEG(current_seg7_digit);
-      current_seg7_digit = (current_seg7_digit + 1) % LED_NUM;
       timer_flag[1] = 0; // Clear the flag
       setTimer(1, 250);  // Reset timer 1 for another 250 ms
+      update7SEG(current_seg7_digit);
+      current_seg7_digit = (current_seg7_digit + 1) % LED_NUM;
     }
     if (timer_flag[2])
     {
-      HAL_GPIO_TogglePin(GPIOA, DOT_PIN); // Toggle the dot
       timer_flag[2] = 0;                  // Clear the flag
       setTimer(2, 500);                   // Reset timer 2 for another 500 ms
+      HAL_GPIO_TogglePin(GPIOA, DOT_PIN); // Toggle the dot
+    }
+    if (timer_flag[3])
+    {
+      timer_flag[3] = 0; // Clear the flag
+      setTimer(3, 50);   // Reset timer 3 for another 100 ms
+      updateLedMatrix(current_matrix_col);
+      current_matrix_col = (current_matrix_col + 1) % MAX_LED_MATRIX;
     }
   }
   /* USER CODE END 3 */
 }
 
 /**
-  * @brief System Clock Configuration
-  * @retval None
-  */
+ * @brief System Clock Configuration
+ * @retval None
+ */
 void SystemClock_Config(void)
 {
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
   /** Initializes the RCC Oscillators according to the specified parameters
-  * in the RCC_OscInitTypeDef structure.
-  */
+   * in the RCC_OscInitTypeDef structure.
+   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
@@ -298,9 +391,8 @@ void SystemClock_Config(void)
   }
 
   /** Initializes the CPU, AHB and APB buses clocks
-  */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
+   */
+  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
@@ -313,10 +405,10 @@ void SystemClock_Config(void)
 }
 
 /**
-  * @brief TIM2 Initialization Function
-  * @param None
-  * @retval None
-  */
+ * @brief TIM2 Initialization Function
+ * @param None
+ * @retval None
+ */
 static void MX_TIM2_Init(void)
 {
 
@@ -354,14 +446,13 @@ static void MX_TIM2_Init(void)
   /* USER CODE BEGIN TIM2_Init 2 */
 
   /* USER CODE END TIM2_Init 2 */
-
 }
 
 /**
-  * @brief GPIO Initialization Function
-  * @param None
-  * @retval None
-  */
+ * @brief GPIO Initialization Function
+ * @param None
+ * @retval None
+ */
 static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
@@ -377,22 +468,16 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13|GPIO_PIN_14, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13 | GPIO_PIN_14, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5
-                          |GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9
-                          |GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_13
-                          |GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_10
-                          |GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14
-                          |GPIO_PIN_15|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5
-                          |GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : PC13 PC14 */
-  GPIO_InitStruct.Pin = GPIO_PIN_13|GPIO_PIN_14;
+  GPIO_InitStruct.Pin = GPIO_PIN_13 | GPIO_PIN_14;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -402,10 +487,7 @@ static void MX_GPIO_Init(void)
                            PA6 PA7 PA8 PA9
                            PA10 PA11 PA12 PA13
                            PA14 PA15 */
-  GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5
-                          |GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9
-                          |GPIO_PIN_10|GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_13
-                          |GPIO_PIN_14|GPIO_PIN_15;
+  GPIO_InitStruct.Pin = GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -415,10 +497,7 @@ static void MX_GPIO_Init(void)
                            PB11 PB12 PB13 PB14
                            PB15 PB3 PB4 PB5
                            PB6 PB7 PB8 PB9 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_10
-                          |GPIO_PIN_11|GPIO_PIN_12|GPIO_PIN_13|GPIO_PIN_14
-                          |GPIO_PIN_15|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5
-                          |GPIO_PIN_6|GPIO_PIN_7|GPIO_PIN_8|GPIO_PIN_9;
+  GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -455,9 +534,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 /* USER CODE END 4 */
 
 /**
-  * @brief  This function is executed in case of error occurrence.
-  * @retval None
-  */
+ * @brief  This function is executed in case of error occurrence.
+ * @retval None
+ */
 void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
@@ -470,12 +549,12 @@ void Error_Handler(void)
 }
 #ifdef USE_FULL_ASSERT
 /**
-  * @brief  Reports the name of the source file and the source line number
-  *         where the assert_param error has occurred.
-  * @param  file: pointer to the source file name
-  * @param  line: assert_param error line source number
-  * @retval None
-  */
+ * @brief  Reports the name of the source file and the source line number
+ *         where the assert_param error has occurred.
+ * @param  file: pointer to the source file name
+ * @param  line: assert_param error line source number
+ * @retval None
+ */
 void assert_failed(uint8_t *file, uint32_t line)
 {
   /* USER CODE BEGIN 6 */

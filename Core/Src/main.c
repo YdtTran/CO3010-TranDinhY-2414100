@@ -33,10 +33,11 @@
 /* USER CODE BEGIN PD */
 #define MATRIX_ROW_PORT GPIOB
 #define MATRIX_COL_PORT GPIOA
-#define DIGIT_PORT GPIOA
+#define DIGIT_EN_PORT GPIOA
 #define SEG_PORT GPIOB
 #define LED_D1_PIN GPIO_PIN_5 // PA5: Active LOW
 #define DOT_PIN GPIO_PIN_4    // PA4
+#define LED_NUM 4
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -78,7 +79,7 @@ static uint16_t seg_pins[8] = {
     GPIO_PIN_4, GPIO_PIN_5, GPIO_PIN_6, GPIO_PIN_7};
 
 /* 7-Segment digit enable pins EN0 -> EN3 on GPIOA (Common Anode: Active HIGH) */
-static uint16_t digit_pins[4] = {
+static uint16_t digit_en_pins[4] = {
     GPIO_PIN_6, // EN0
     GPIO_PIN_7, // EN1
     GPIO_PIN_8, // EN2
@@ -86,7 +87,7 @@ static uint16_t digit_pins[4] = {
 };
 
 /* Digits to display on the 4 7-segment displays */
-static uint8_t seg7_digits[4] = {1, 2, 3, 0};
+static uint8_t led_buffer[4] = {1, 2, 3, 0};
 
 /* 8x8 LED Matrix Heart Bitmap (Column-scanned: bit r = Row r, active HIGH) */
 static uint8_t matrix_heart_bitmap[8] = {
@@ -105,7 +106,7 @@ static volatile uint8_t current_matrix_col = 0;
 static volatile uint8_t current_seg7_digit = 0;
 static volatile uint16_t seg7_timer_counter = 0;
 static volatile uint16_t d1_blink_counter = 0;
-static seg7_handle_t seg7_segments = {0}; // Current segment states for 7-segment display
+static seg7_handle_t seg7_handler = {0}; // Current segment states for 7-segment display
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -116,6 +117,20 @@ static void MX_TIM2_Init(void);
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim);
 void scan_led_matrix_column(uint8_t col_idx);
 void scan_seg7_digit(uint8_t digit_idx);
+void update7SEG(int index)
+{
+  for (uint8_t i = 0; i < LED_NUM; i++)
+  {
+    HAL_GPIO_WritePin(GPIOA, digit_en_pins[i], GPIO_PIN_SET);
+  }
+
+  HAL_GPIO_WritePin(GPIOA, digit_en_pins[index], GPIO_PIN_RESET);
+
+  if (index < 0 || index >= LED_NUM)
+    return;
+
+  SEG7Set_Digit(&seg7_handler, led_buffer[index]);
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -163,7 +178,7 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-  SEG7Init(&seg7_segments, SEG7_COMMON_ANODE, GPIOB, seg_pins);
+  SEG7Init(&seg7_handler, SEG7_COMMON_ANODE, GPIOB, seg_pins);
   while (1)
   {
     /* USER CODE END WHILE */
@@ -339,17 +354,13 @@ static void MX_GPIO_Init(void)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   static uint8_t counter = 0;
+  static uint8_t back = 0;
   if (htim->Instance == TIM2)
   {
-    // Set PNP enable pins LOW to turn off all columns before scanning the next one
-    for (int i = 0; i < 4; i++)
-    {
-      HAL_GPIO_WritePin(DIGIT_PORT, digit_pins[i], GPIO_PIN_SET);
-    }
-
-    HAL_GPIO_WritePin(DIGIT_PORT, digit_pins[counter], GPIO_PIN_RESET);
-    SEG7Set_Digit(&seg7_segments, seg7_digits[counter]);
-    counter = (counter + 1) % 4;
+    update7SEG(counter);
+    led_buffer[counter] = back;
+    counter = (counter + 1) % LED_NUM;
+    back = (back + 1) % 10;
   }
 }
 /* USER CODE END 4 */

@@ -86,7 +86,7 @@ static uint16_t digit_pins[4] = {
 };
 
 /* Digits to display on the 4 7-segment displays */
-static uint8_t seg7_digits[4] = {1, 2, 3, 4};
+static uint8_t seg7_digits[4] = {1, 2, 3, 0};
 
 /* 8x8 LED Matrix Heart Bitmap (Column-scanned: bit r = Row r, active HIGH) */
 static uint8_t matrix_heart_bitmap[8] = {
@@ -348,8 +348,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     }
 
     HAL_GPIO_WritePin(DIGIT_PORT, digit_pins[counter], GPIO_PIN_RESET);
-    SEG7Set_Digit(&seg7_segments, counter + 1);
-    counter = (counter + 1) % 2;
+    SEG7Set_Digit(&seg7_segments, seg7_digits[counter]);
+    counter = (counter + 1) % 4;
   }
 }
 /* USER CODE END 4 */

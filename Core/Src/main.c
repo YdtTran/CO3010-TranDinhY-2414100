@@ -346,7 +346,7 @@ int main(void)
     if (timer_flag[1])
     {
       timer_flag[1] = 0; // Clear the flag
-      setTimer(1, 250);  // Reset timer 1 for another 250 ms
+      setTimer(1, 200);  // Reset timer 1 for another 250 ms
       update7SEG(current_seg7_digit);
       current_seg7_digit = (current_seg7_digit + 1) % LED_NUM;
     }
@@ -359,7 +359,7 @@ int main(void)
     if (timer_flag[3])
     {
       timer_flag[3] = 0; // Clear the flag
-      setTimer(3, 50);   // Reset timer 3 for another 100 ms
+      setTimer(3, 20);   // Reset timer 3 for another 100 ms
       updateLedMatrix(current_matrix_col);
       current_matrix_col = (current_matrix_col + 1) % MAX_LED_MATRIX;
     }

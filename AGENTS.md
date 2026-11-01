@@ -31,21 +31,28 @@ This repository contains firmware projects for the **CO3010 (Microprocessors)** 
 
 ## Codebase Architecture
 
-- **`Core/Inc/` & `Core/Src/`**:
-  - [`main.c`](file:///e:/Workspace/University/HCMUT/CO3010/Core/Src/main.c): Application entry, clock configuration, peripheral setup (`MX_GPIO_Init`, `MX_TIM2_Init`), and main loop / timer interrupt callbacks (`HAL_TIM_PeriodElapsedCallback`).
-  - [`traffic_light.h`](file:///e:/Workspace/University/HCMUT/CO3010/Core/Inc/traffic_light.h) / `traffic_light.c`: Traffic light state machine, timing counters, and LED pin bindings.
-  - [`seg7.h`](file:///e:/Workspace/University/HCMUT/CO3010/Core/Inc/seg7.h) / [`seg7.c`](file:///e:/Workspace/University/HCMUT/CO3010/Core/Src/seg7.c): Low-level 7-segment digit decoder (common cathode / common anode), segment pin mapping (`gpio[8]`).
-  - [`seg7_display.h`](file:///e:/Workspace/University/HCMUT/CO3010/Core/Inc/seg7_display.h) / [`seg7_display.c`](file:///e:/Workspace/University/HCMUT/CO3010/Core/Src/seg7_display.c): High-level multi-digit display controller, digit multiplexing/scanning using [`seg7_display_control_t`](file:///e:/Workspace/University/HCMUT/CO3010/Core/Inc/seg7_display.h#L7-L11) and [`seg7_display_t`](file:///e:/Workspace/University/HCMUT/CO3010/Core/Inc/seg7_display.h#L13-L19).
-- **`CMakeLists.txt`**: Project definition. When adding any new `.c` source files, ensure they are added to `add_executable(CO3010 ...)`.
+- **`src/`**: Application and STM32 support sources, with their headers alongside them.
+  - [`main.c`](src/main.c): Application entry, clock configuration, peripheral setup (`MX_GPIO_Init`, `MX_TIM2_Init`), and main loop / timer interrupt callbacks (`HAL_TIM_PeriodElapsedCallback`).
+  - [`app.c`](src/app.c): Application initialization, clock counting, and scheduling of display scans, matrix animation, and the blinking dot.
+  - `stm32f1xx_it.c`, `stm32f1xx_hal_msp.c`, `system_stm32f1xx.c`, `syscalls.c`, and `sysmem.c`: Interrupts, HAL setup, system initialization, and runtime support.
+- **`lib/`**: Reusable modules, each containing its own source and header files.
+  - [`seg7/`](lib/seg7/): Low-level 7-segment digit decoder (common cathode / common anode) and segment pin mapping (`gpio[8]`).
+  - [`seg7_display/`](lib/seg7_display/): Four-digit display pin bindings, clock-to-digit conversion, and multiplex scanning.
+  - [`led_matrix/`](lib/led_matrix/): Matrix pin bindings, bitmap, column scanning, and bitmap rotation.
+  - [`software_timer/`](lib/software_timer/): Ten software timers driven by the 10 ms TIM2 interrupt; expiration flags are consumed by the application loop.
+  - [`traffic_light/`](lib/traffic_light/): Traffic light state and LED pin definitions; `traffic_light.c` currently contains only its header include.
+- **`CMakeLists.txt`**: Project definition. Register new library `.c` files in `add_executable(...)` and their header directories in `target_include_directories(...)`.
 - **`cmake/stm32cubemx/`**: Auto-generated HAL library files and toolchain definitions.
 - **`protues/`**: Proteus simulation schematic files (`lab1.pdsprj`, `lab2.pdsprj`).
+
+CubeMX paths in `CO3010.ioc`, `.mxproject`, and `cmake/stm32cubemx/CMakeLists.txt` use `src/`. After regenerating with CubeMX, check that generated source and include paths still match this layout before building.
 
 ---
 
 ## Coding Guidelines & Conventions
 
 1. **User Code Blocks in Generated Files**:
-   - In files generated or touched by STM32CubeMX (such as [`Core/Src/main.c`](file:///e:/Workspace/University/HCMUT/CO3010/Core/Src/main.c)), place custom code strictly between `/* USER CODE BEGIN ... */` and `/* USER CODE END ... */` tags to prevent inadvertent overwrites.
+   - In files generated or touched by STM32CubeMX (such as [`src/main.c`](src/main.c)), place custom code strictly between `/* USER CODE BEGIN ... */` and `/* USER CODE END ... */` tags to prevent inadvertent overwrites.
 2. **Peripheral Struct Patterns**:
    - Follow existing project conventions for GPIO descriptors: use `GPIO_TypeDef *port` and `uint32_t gpio` (or an array of `uint32_t` pin constants).
 3. **C Standards**:

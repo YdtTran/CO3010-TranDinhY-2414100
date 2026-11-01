@@ -33,8 +33,11 @@ enable_language(C ASM)
 
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME}
-    Core/Src/traffic_light.c
-    Core/Src/seg7.c
+    lib/traffic_light/traffic_light.c
+    lib/seg7/seg7.c
+    lib/seg7_display/seg7_display.c
+    lib/led_matrix/led_matrix.c
+    lib/software_timer/software_timer.c
 )
 
 # Add STM32CubeMX generated sources
@@ -47,12 +50,16 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
 # Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user sources here
+    src/app.c
 )
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined include paths
+    lib/seg7
+    lib/traffic_light
+    lib/seg7_display
+    lib/led_matrix
+    lib/software_timer
 )
 
 # Add project symbols (macros)

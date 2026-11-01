@@ -1,0 +1,34 @@
+#ifndef LED_MATRIX_H
+#define LED_MATRIX_H
+
+#include "stm32f1xx_hal.h"
+
+#define MATRIX_ROW_PORT GPIOB
+#define MATRIX_COL_PORT GPIOA
+#define MAX_LED_MATRIX 8
+
+#define MATRIX_ROW0_PIN GPIO_PIN_8
+#define MATRIX_ROW1_PIN GPIO_PIN_9
+#define MATRIX_ROW2_PIN GPIO_PIN_10
+#define MATRIX_ROW3_PIN GPIO_PIN_11
+#define MATRIX_ROW4_PIN GPIO_PIN_12
+#define MATRIX_ROW5_PIN GPIO_PIN_13
+#define MATRIX_ROW6_PIN GPIO_PIN_14
+#define MATRIX_ROW7_PIN GPIO_PIN_15
+
+#define MATRIX_COL0_PIN GPIO_PIN_2
+#define MATRIX_COL1_PIN GPIO_PIN_3
+#define MATRIX_COL2_PIN GPIO_PIN_10
+#define MATRIX_COL3_PIN GPIO_PIN_11
+#define MATRIX_COL4_PIN GPIO_PIN_12
+#define MATRIX_COL5_PIN GPIO_PIN_13
+#define MATRIX_COL6_PIN GPIO_PIN_14
+#define MATRIX_COL7_PIN GPIO_PIN_15
+
+void updateMatrixRows(uint8_t col_index);
+void updateLedMatrix(uint8_t index);
+void clearMatrix(void);
+void shiftLedMatrix(void);
+void scanLedMatrix(void);
+
+#endif /* LED_MATRIX_H */

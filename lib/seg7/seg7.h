@@ -6,33 +6,10 @@
 #define SEG7_COMMON_CATHODE 0
 #define SEG7_COMMON_ANODE 1
 
-typedef union
-{
-    struct
-    {
-        /* data */
-        uint8_t dp : 1;
-        uint8_t g : 1;
-        uint8_t f : 1;
-        uint8_t e : 1;
-        uint8_t d : 1;
-        uint8_t c : 1;
-        uint8_t b : 1;
-        uint8_t a : 1;
-    };
-    uint16_t data;
-} seg7_t;
-
-typedef struct
-{
-    seg7_t segments;
-    uint8_t com;
-    uint16_t gpio[8];
-    GPIO_TypeDef *port;
-} seg7_handle_t;
-
-void SEG7Init(seg7_handle_t *led_handle, uint8_t com, GPIO_TypeDef *port, uint16_t gpio[8]);
-void SEG7Set_Digit(seg7_handle_t *led_handle, uint8_t digit);
-void SEG7Clear(seg7_handle_t *led_handle);
+/* segs contains eight pins in A, B, C, D, E, F, G, DP order.
+ * Use 0 for an unconnected segment. Values above 9 blank the display.
+ */
+void SEG7_SetDigit(const uint32_t segs[8], GPIO_TypeDef *port,
+                   uint8_t value, uint8_t com);
 
 #endif /* SEG7_H */

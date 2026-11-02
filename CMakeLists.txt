@@ -38,6 +38,7 @@ add_executable(${CMAKE_PROJECT_NAME}
     lib/seg7_display/seg7_display.c
     lib/led_matrix/led_matrix.c
     lib/software_timer/software_timer.c
+
 )
 
 # Add STM32CubeMX generated sources
@@ -48,11 +49,6 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
     # Add user defined library search paths
 )
 
-# Add sources to executable
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE
-    src/app.c
-)
-
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     lib/seg7
@@ -60,6 +56,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     lib/seg7_display
     lib/led_matrix
     lib/software_timer
+
 )
 
 # Add project symbols (macros)

@@ -25,10 +25,10 @@
 #define MATRIX_COL6_PIN GPIO_PIN_14
 #define MATRIX_COL7_PIN GPIO_PIN_15
 
-void updateMatrixRows(uint8_t col_index);
-void updateLedMatrix(uint8_t index);
-void clearMatrix(void);
-void shiftLedMatrix(void);
-void scanLedMatrix(void);
+void LED_MATRIX_UpdateRows(uint8_t col_index);
+void LED_MATRIX_Update(uint8_t index);
+void LED_MATRIX_Clear(void);
+void LED_MATRIX_Shift(void);
+void LED_MATRIX_Scan(void);
 
 #endif /* LED_MATRIX_H */

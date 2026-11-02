@@ -36,13 +36,13 @@ static uint8_t matrix_bitmap[8] = {
 
 static uint8_t current_matrix_col = 0;
 
-void updateMatrixRows(uint8_t col_index)
+void LED_MATRIX_UpdateRows(uint8_t col_index)
 {
   if (col_index >= MAX_LED_MATRIX)
     return;
 
   // Turn off all columns first
-  clearMatrix();
+  LED_MATRIX_Clear();
 
   // Set the rows based on the bitmap for the current column
   HAL_GPIO_WritePin(MATRIX_COL_PORT, matrix_col_pins[col_index], GPIO_PIN_RESET);
@@ -56,7 +56,7 @@ void updateMatrixRows(uint8_t col_index)
   // Enable the current column
 }
 
-void clearMatrix(void)
+void LED_MATRIX_Clear(void)
 {
   for (uint8_t i = 0; i < MAX_LED_MATRIX; i++)
   {
@@ -68,40 +68,40 @@ void clearMatrix(void)
   }
 }
 
-void updateLedMatrix(uint8_t index)
+void LED_MATRIX_Update(uint8_t index)
 {
   switch (index)
   {
   case 0:
-    updateMatrixRows(0);
+    LED_MATRIX_UpdateRows(0);
     break;
 
   case 1:
-    updateMatrixRows(1);
+    LED_MATRIX_UpdateRows(1);
     break;
 
   case 2:
-    updateMatrixRows(2);
+    LED_MATRIX_UpdateRows(2);
     break;
 
   case 3:
-    updateMatrixRows(3);
+    LED_MATRIX_UpdateRows(3);
     break;
 
   case 4:
-    updateMatrixRows(4);
+    LED_MATRIX_UpdateRows(4);
     break;
 
   case 5:
-    updateMatrixRows(5);
+    LED_MATRIX_UpdateRows(5);
     break;
 
   case 6:
-    updateMatrixRows(6);
+    LED_MATRIX_UpdateRows(6);
     break;
 
   case 7:
-    updateMatrixRows(7);
+    LED_MATRIX_UpdateRows(7);
     break;
 
   default:
@@ -109,7 +109,7 @@ void updateLedMatrix(uint8_t index)
   }
 }
 
-void shiftLedMatrix(void)
+void LED_MATRIX_Shift(void)
 {
   uint8_t tmp = matrix_bitmap[MAX_LED_MATRIX - 1];
   for (uint8_t i = MAX_LED_MATRIX - 1; i > 0; i--)
@@ -119,8 +119,8 @@ void shiftLedMatrix(void)
   matrix_bitmap[0] = tmp;
 }
 
-void scanLedMatrix(void)
+void LED_MATRIX_Scan(void)
 {
-  updateLedMatrix(current_matrix_col);
+  LED_MATRIX_Update(current_matrix_col);
   current_matrix_col = (current_matrix_col + 1) % MAX_LED_MATRIX;
 }

@@ -3,7 +3,7 @@
 static volatile uint8_t timer_flag[SOFT_TIMER_NUM_MAX] = {0};
 static volatile uint16_t timer_counter[SOFT_TIMER_NUM_MAX] = {0};
 
-void setTimer(uint8_t timer_index, uint16_t duration_ms)
+void SOFT_TIMER_Set(uint8_t timer_index, uint16_t duration_ms)
 {
   if (timer_index >= SOFT_TIMER_NUM_MAX)
     return;
@@ -12,7 +12,7 @@ void setTimer(uint8_t timer_index, uint16_t duration_ms)
   timer_flag[timer_index] = 0;                                 // Clear the expiration flag
 }
 
-void timerRun(void)
+void SOFT_TIMER_Run(void)
 {
   for (uint8_t i = 0; i < SOFT_TIMER_NUM_MAX; i++)
   {
@@ -27,7 +27,7 @@ void timerRun(void)
   }
 }
 
-uint8_t timerExpired(uint8_t timer_index)
+uint8_t SOFT_TIMER_Expired(uint8_t timer_index)
 {
   if (timer_index >= SOFT_TIMER_NUM_MAX || !timer_flag[timer_index])
     return 0;

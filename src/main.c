@@ -23,9 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include "pin.h"
 #include "software_timer.h"
-#include "input_reading.h"
-#include "output_display.h"
-
+#include "traffic_light.h"
 
 /* USER CODE END Includes */
 
@@ -48,8 +46,11 @@
 TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
-static uint32_t blink_elapsed_ms;
-static uint8_t mode = 1U;
+enum
+{
+  INDICATOR_TIMER = 2U
+};
+static traffic_system_t traffic_system;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -96,8 +97,18 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  INPUT_Init();
-  OUTPUT_ShowMode(mode);
+  traffic_system.straight = (traffic_light_t){
+      .port = L_PORT, .gpio = {L[0], L[1], L[2]}, .timer_index = 0U};
+  traffic_system.cross = (traffic_light_t){
+      .port = T_PORT, .gpio = {T[0], T[1], T[2]}, .timer_index = 1U};
+  traffic_system.green_s = 2U;
+  traffic_system.yellow_s = 3U; /* Red lasts green + yellow = 5 seconds. */
+  if (!TRAFFIC_SYSTEM_Init(&traffic_system))
+  {
+    Error_Handler();
+  }
+  TRAFFIC_SYSTEM_Start(&traffic_system);
+  SOFT_TIMER_Set(INDICATOR_TIMER, 250U);
   /* TIM2 period follows TICK_INTERVAL_MS; indicator toggles every 250 ms. */
   if (HAL_TIM_Base_Start_IT(&htim2) != HAL_OK)
   {
@@ -111,10 +122,12 @@ int main(void)
   {
     /* USER CODE END WHILE */
     /* USER CODE BEGIN 3 */
-    if (INPUT_ModePressed())
+    /* Keep both traffic timers synchronized while consuming and rearming them. */
+    TRAFFIC_SYSTEM_Run(&traffic_system);
+    if (SOFT_TIMER_Expired(INDICATOR_TIMER))
     {
-      mode = mode % 4U + 1U;
-      OUTPUT_ShowMode(mode);
+      HAL_GPIO_TogglePin(INDICATOR_PORT, INDICATOR);
+      SOFT_TIMER_Set(INDICATOR_TIMER, 250U);
     }
   }
   /* USER CODE END 3 */
@@ -197,9 +210,12 @@ static void MX_TIM2_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN TIM2_Init 2 */
-  /* Prescaler gives a 1 kHz counter; override CubeMX ARR in a preserved block. */
+  /* Keep the working l02_ex6 setup at 10 ms; override only for another tick. */
+#if TICK_INTERVAL_MS != 10U
   __HAL_TIM_SET_AUTORELOAD(&htim2, TICK_INTERVAL_MS - 1U);
+#endif
   __HAL_TIM_SET_COUNTER(&htim2, 0U);
+  __HAL_TIM_CLEAR_FLAG(&htim2, TIM_FLAG_UPDATE);
 
   /* USER CODE END TIM2_Init 2 */
 }
@@ -253,14 +269,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   if (htim->Instance == TIM2)
   {
     SOFT_TIMER_Run();
-    blink_elapsed_ms += TICK_INTERVAL_MS;
-    if (blink_elapsed_ms >= 250U)
-    {
-      /* Carry the remainder to avoid drift when 250 is not a multiple of tick. */
-      blink_elapsed_ms -= 250U;
-      HAL_GPIO_TogglePin(INDICATOR_PORT, INDICATOR);
-    }
-
   }
 }
 /* USER CODE END 4 */

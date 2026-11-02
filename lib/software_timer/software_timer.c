@@ -8,7 +8,7 @@ void SOFT_TIMER_Set(uint8_t timer_index, uint16_t duration_ms)
   if (timer_index >= SOFT_TIMER_NUM_MAX)
     return;
 
-  timer_counter[timer_index] = duration_ms; // Keep durations in milliseconds.
+  timer_counter[timer_index] = (duration_ms + TICK_INTERVAL_MS - 1U) / TICK_INTERVAL_MS;
   timer_flag[timer_index] = 0;                                 // Clear the expiration flag
 }
 
@@ -18,10 +18,7 @@ void SOFT_TIMER_Run(void)
   {
     if (timer_counter[i] > 0)
     {
-      if (timer_counter[i] > TICK_INTERVAL_MS)
-        timer_counter[i] -= TICK_INTERVAL_MS;
-      else
-        timer_counter[i] = 0;
+      --timer_counter[i];
       if (timer_counter[i] == 0)
       {
         timer_flag[i] = 1; // set the flag when the timer expires

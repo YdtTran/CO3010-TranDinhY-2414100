@@ -2,22 +2,27 @@
 
 ## 5.2 Exercise 1: Sketch an FSM
 
-The existing traffic-light sketches describe two cooperating state machines. The
+The redrawn diagram separates the project operating modes from the traffic subsystem. The
 operating mode starts at NORMAL (mode 1). Each debounced button-1 press advances
 NORMAL -> SET_RED (2) -> SET_AMBER (3) -> SET_GREEN (4) -> NORMAL. In a setting
 mode, button 2 proposes a duration and button 3 confirms it. These adjustment
 behaviors are a design for later work, not implemented by exercises 1-5.
 
-In NORMAL, the traffic cycle is:
+The traffic subsystem uses a separate three-state FSM for each direction:
 
 ```mermaid
 stateDiagram-v2
-    [*] --> L_GREEN_T_RED
-    L_GREEN_T_RED --> L_AMBER_T_RED: green duration elapsed
-    L_AMBER_T_RED --> L_RED_T_GREEN: amber duration elapsed
-    L_RED_T_GREEN --> L_RED_T_AMBER: green duration elapsed
-    L_RED_T_AMBER --> L_GREEN_T_RED: amber duration elapsed
+    RED --> GREEN: timeout_flag
+    GREEN --> YELLOW: timeout_flag
+    YELLOW --> RED: timeout_flag
 ```
+
+Each direction has its own one-second software timer and countdown in seconds.
+When a countdown reaches zero, its timeout flag advances that light's FSM.
+Initialization/reset sets straight GREEN and cross RED with countdowns green_s
+and green_s + yellow_s, clears both flags, and leaves the subsystem paused.
+TRAFFIC_SYSTEM_Start explicitly starts counting. The normal-mode application
+has not yet been wired to this subsystem.
 
 L denotes left/right traffic; T denotes top/bottom traffic. Opposing green
 lights are never on together. Red duration equals the opposing green plus amber
@@ -25,13 +30,13 @@ durations. Setting modes blink the selected color at 2 Hz and display the mode
 and proposed duration. Exact duration limits must follow the full assignment;
 the supplied excerpt does not specify them.
 
-Editable sketches: [FSM](traffic-light-fsm.drawio) and
+Editable two-page diagram: [FSM](traffic-light-fsm.drawio) and
 [compatible copy](traffic-light-fsm-compatible.drawio). Illustrations:
 [traffic cycle](traffic-light-cycle.png), [modes](traffic-light-modes.png).
 
-This branch contains the FSM report and reusable libraries. The old Lab 2
-application has been removed; main is an idle scaffold. Lab 3 schematic wiring,
-timer demonstration and button integration belong to later branches.
+The Exercise 1 branch contains the FSM report and reusable libraries. The old Lab 2
+application was removed there; main was an idle scaffold. Lab 3 schematic wiring,
+timer demonstration and button integration were added incrementally in later branches.
 
 Validation: firmware compiled and linked with `ninja -C build/Debug`.
 
@@ -42,14 +47,73 @@ schematic for this exercise. It contains the STM32F103C8, opposing traffic LED
 groups, common-anode displays with PNP drivers, three buttons and indicator D15.
 The wiring contract used for the next exercise is:
 
-| Signal | MCU pins | Polarity |
-| --- | --- | --- |
-| D15 indicator | PA5 | Active low |
-| Seven-segment A-G | PA8-PA14 | Active low |
-| Paired digit enables | PA0, PA1 | Active low PNP |
-| Left/right traffic group | PB0-PB2 | Active high |
-| Top/bottom traffic group | PB3-PB5 | Active high |
-| Buttons 1-3 | PB13-PB15 | Pull-up, switch to ground |
+### STM32F103C8 (U1) MCU pinout and net connections
+
+Pin numbers refer to the LQFP48 package.
+
+| Pin name | Pin # | Connected net / function | Description / target peripheral |
+| --- | --- | --- | --- |
+| PA5 | 15 | Active-low LED | D15 red LED cathode; anode connects to +3V3 |
+| PA8 | 29 | SEG0 | Seven-segment A |
+| PA9 | 30 | SEG1 | Seven-segment B |
+| PA10 | 31 | SEG2 | Seven-segment C |
+| PA11 | 32 | SEG3 | Seven-segment D |
+| PA12 | 33 | SEG4 | Seven-segment E |
+| PA13 | 34 | SEG5 | Seven-segment F |
+| PA14 | 37 | SEG6 | Seven-segment G |
+| PB0 | 18 | L0 | Left/right LED indicators through 220 Ω resistors R10 and R4 |
+| PB1 | 19 | L1 | Left/right LED indicators through 220 Ω resistors R11 and R5 |
+| PB2 | 20 | L2 | Left/right LED indicators through 220 Ω resistors R12 and R6 |
+| PB3 | 39 | T0 | Top/bottom LED indicators through 220 Ω resistors R1 and R7 |
+| PB4 | 40 | T1 | Top/bottom LED indicators through 220 Ω resistors R2 and R8 |
+| PB5 | 41 | T2 | Top/bottom LED indicators through 220 Ω resistors R3 and R9 |
+| PB13 | 26 | BTN0 | Pushbutton 1, normally open switch to GND |
+| PB14 | 27 | BTN1 | Pushbutton 2, normally open switch to GND |
+| PB15 | 28 | BTN2 | Pushbutton 3, normally open switch to GND |
+
+### Peripheral breakdown
+
+**A. Seven-segment displays (common anode)**
+
+SEG0 through SEG6 connect to inputs A through G on both dual-digit display
+modules. Segments are active low. PNP transistors supply the digit anodes;
+their emitters connect to +3V3 and their enables are active low.
+
+| Enable | Firmware MCU pin | PNP driver | Digit | Base resistor |
+| --- | --- | --- | --- | --- |
+| EN0 | PA0 (pin 10) | Q3 | DIGIT0 | R39, 1 kΩ |
+| EN0 | PA0 (pin 10) | Q1 | DIGIT2 | R13, 1 kΩ |
+| EN1 | PA1 (pin 11) | Q4 | DIGIT1 | R40, 1 kΩ |
+| EN1 | PA1 (pin 11) | Q2 | DIGIT3 | R14, 1 kΩ |
+
+PA0/PA1 are the firmware's chosen enable assignments; the supplied connection
+list identifies EN0/EN1 without specifying their MCU pins.
+
+**B. Circular LED indicators (discrete LEDs)**
+
+Each traffic output drives two LED branches through separate 220 Ω resistors
+to GND. These outputs are active high.
+
+| Group | Output 0 / resistor | Output 1 / resistor | Output 2 / resistor |
+| --- | --- | --- | --- |
+| Top | T0 / R1 | T1 / R2 | T2 / R3 |
+| Bottom | T0 / R7 | T1 / R8 | T2 / R9 |
+| Left | L0 / R10 | L1 / R11 | L2 / R12 |
+| Right | L0 / R4 | L1 / R5 | L2 / R6 |
+
+For both L and T, index 0 = green, 1 = yellow, and 2 = red.
+Firmware uses this confirmed color order.
+
+**C. Pushbuttons**
+
+| Button | Connection |
+| --- | --- |
+| 1 | BTN0 (PB13) → normally open tactile switch → GND |
+| 2 | BTN1 (PB14) → normally open tactile switch → GND |
+| 3 | BTN2 (PB15) → normally open tactile switch → GND |
+
+Enable the internal pull-ups in firmware. Released buttons read high; pressed
+buttons read low.
 
 The two enable lines select pairs of digits (0/2 and 1/3); paired digits cannot
 show independent values with this wiring. PA13/PA14 and PB3/PB4 require debug
@@ -95,7 +159,7 @@ At 1 and 10 ms, edges land exactly on 250 ms boundaries. At 100 ms, half-periods
 alternate 300/200 ms. Exact uniform 250 ms edges are impossible using only 100 ms
 interrupt boundaries; a finer interrupt or hardware output compare is needed.
 
-Software timers now store milliseconds and expire on the first interrupt at or
+Software timers accept milliseconds, store rounded-up tick counts and expire on the first interrupt at or
 after their deadline, including durations shorter than a tick. Zero disables a
 timer. Callers do not need to convert duration arguments when the tick changes.
 
@@ -116,8 +180,9 @@ The main loop must remain nonblocking to preserve this sampling cadence.
 Button 1 (PB13, active low) generates one event per press. Auto-repeat is disabled
 so holding the button does not advance modes repeatedly. Both scanning and event
 consumption run in the main loop, avoiding interrupt/main flag races. Each event
-advances mode = mode % 4 + 1: NORMAL (1), RED setting (2), AMBER setting (3), GREEN
-setting (4), then NORMAL. Buttons 2/3 and the full traffic FSM are deferred to
+advances the project FSM in lib/fsm through: NORMAL (1), RED setting (2), AMBER setting (3), GREEN
+setting (4), then NORMAL. main.c delegates mode transitions to FSM_Run and displays
+the selected mode. Buttons 2/3 and the full traffic FSM are deferred to
 later exercises; this exercise implements mode selection only.
 
 OUTPUT_ShowMode blanks both enables before changing segments, then enables the

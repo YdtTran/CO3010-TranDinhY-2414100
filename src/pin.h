@@ -18,7 +18,7 @@ static const uint32_t SEG[7] = {
     GPIO_PIN_12, GPIO_PIN_13, GPIO_PIN_14};
 #define SEG_ACTIVE_STATE GPIO_PIN_RESET
 
-/* Traffic LEDs: array indices follow schematic labels, active HIGH.
+/* Traffic LEDs: indices 0/1/2 = green/yellow/red, active HIGH.
  * L drives left/right groups: pins 18, 19, 20.
  * T drives top/bottom groups: pins 39, 40, 41.
  */

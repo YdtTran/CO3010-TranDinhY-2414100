@@ -1,4 +1,111 @@
-<mxfile host="Electron" pages="2" compressed="true">
-  <diagram id="modes" name="1 - Operating modes">5Vlbb+o4EP41fj2Kba6PBEJbqaUSoN2zTyuTTIJVYyPHXHp+/ZETB5IGqjbLKajLUzLjGU/m+4xnbESHq/2dZuvlk4pAIOIlmkeIjhAhHiLECWb8F+RCXEg3PILUyXKRUUoYvq4KQyUlhKYiY1qrXXVYrER11jVLoCaYhUwUcRylf/PILJ2UeKXh98CTZTE1LjQLFr4kWm2kmxARGme/XL1ihTM3Pl2ySO1KIhogOtRKmfxptR+CsJl7kzdExmcGHGLXIM0HbQw3Aup2zlVqXovEZF8G1goj6u+W3MBszUKr3Wm2RtRfmpVw6lhJM2YrLl4RHd2D2ILhIXMKBzruIOqnaxZymdjXllVzIYZKKJ3NWeSP+qnR6gVKmla33e70D5oCKlIbK5WE6rw20z4TPJGIjkKQBjSi/ha0DVEMnGLFo8h+up8nYsvExiUCkY4wiPoLRDqJfZhPB+PxwxAR7/Hh7n5u0z0kyO8i4j09j4JZYYDI+GDjvII2sC9l3GF0B2oFRr8i4i1LXOs6NHclYnodJ9xXx9jEI3IgAHPLIjl4rtACkbFjxmmWpIZpc6sswRj3SPeTLAEh+Do9A3ADbEgdm0LknPTfIHMhaKTSKyZuFZuIQS8OP4nNJRcnLi/HyfP0afB4ej06O31eMt1IuxtpFsc8tFvQa2j/Ot8OG/F0LZjlh1YsyraqjTSR2sm0EbNwr04tWizzwk2nSi7cugy5NES3yqy4F0J4TWaRMrNmgf3fnwajpuTyBZcvFrAs/1nevcdglJ7nFx0cAiQe6tr9xyN/jGGd3p9hGFstQN8sx+KYXJVjtM6xwZMfTC/DMpf7BjyjX8azVucyPEs0gLxVnkVt6EWtK/KsVefZ3TQIJpfhmct9A561vmzHvBTPFrZ/y0wgKjpNfJ53aqMzalVr7BIdrZeZe1XaLFWiJBPBUeofCes1IGfb1sIyGtjWGdHRQqjwJRe5EafJJ9gChH/oeE/1bLDn5qcLxT7/YyP8kc9n9OtPF3D2ctS5lp/pBEy9wC1xeAopmNNc0CCY4dtq9v8jrisVASbNkC1/wf8U2hY5ie2hviwB688n+GtxJbQZrofovxWoDkgHK66AesQ4g/UkpqWK7qqo0lYzVEvxfy9czy9W/JH/4VIFdVVcW7gZrqX4v/F69d5Zr/gz++vXA/uvVAbSW63RYxy34/4Va/Rg9DB//0i5VoXPJyQvq7kMNbAUyhU26WEUENTzUJ/2+4jYgjvLnr1xQcTDiPRP+qS5z5Rtj/7s9F5qsmMvbmt9C+i5viAzNypJ7PGZB1vIaEXanrVL89hsNu5/nQzhHUkhGD5P/gom84fnycdThfO4JOxNEX/2VRFPQ6btecxG2m+2TxBxc6KVsXddVmsXXO5N5EeAhZ1LfuftySKYjc4OF23iJ/mCzOw1uLagfu7YoDGixV1V5QahEBZ+infXGXWbHVQjMj7eZWW60nUgDX4D</diagram>
-  <diagram id="traffic" name="2 - Normal traffic cycle">7Vlbb6M6EP41fl2ByfURCGkjNelRSHV2nyoXHLBiMDLO7fz6owGThIa02W6UZtXmIQKPZzz29409HpDlJps7SbJ4LELKETYyElFkDRDGJsJYN/zLQhXrVmwYe8E9ZVGstMSsJC8kWERSLNOwlCBszYsfPFseslwphCqfko1LOQzMdGdtA+HhiQ47vyRN1Zk6iilOy04rwpd6hgh3uEKW84JwJ4KHyeN0bD+AJRcjp4uwMZvaw+HIRdhwf7kPXqWB8HCnVJrN1ZZrs8XMKYxsIstZx0xRPyMBSNeSZMhyYpVwLZ6LVA1JwvgWWYN7yldUsYBogc/+Ay2zgywnz0jA0gheWyBmnLuCC1mMWa2v5eRKigU9kLS67Xanv5NUUOKjvqlIaX1cQMshnEUpsgYBTRWVyHJWVIKL3NaChIUhTF0vBIjp5iRURZMG6Y6KhCq5RdjQCl2NJCwGwjtg1wf8Mzq6MT7gXqVH8vI92lmu8QLhoaZGM01yRaRqoMkNAGyaZg93fxNgyjnL8gth03+FTQM4uAEafBlokuj98B3bownCxt3U8ybNkaoV5OmWMWEpsuy9mf1e4EqR56Vs6g2OVQdLSRQTlfpN0CZs017Y+k3aXDXkzU6dV2brmFdWt4FYZu9CzCJnM8seO970z5mlzXyUWfZNMGs+n+MguGVmdXqfzKzgjD3LnT76/uU2rYI+jcSqDfC9aV2WWq3OtalFzqfWhXat09SqDfC9a132PLw6tcqt+UQSLJayOFbqybIiMqKqnqgdzRgbNHx1tzw4wkDm61chVSwikRLu7Vud/SFnfOBAa0M6nIa2lGKNrMELF8GibNI9mg8sTl4od3b32aYbF90w9VO7As+/wMMf5XhKbn9qh4uXvayZA5Jyotiqvkp/nDk/N6Q4M5ZQhI1ldgxshWANVW3hG9VbQZU8N6QXb6FKjlGtLHw5VHV86mg1a6juQ7fA9aqoBtFzw8n+BqoVgjVUv2qsGqd3YPMzYzUgzw3li7dQbYjVL3uu1mPVeCNWzauiqliwyN/Pwv17u8ycp08Pnn9eGu7MJibCxlyKBPxMYQpZTKCSB/l2JIAb8OdTBZZpeGzDI0EMMxckLLXA0YSoIIY7PTZyFqUE5hNTEubFxB3dKxDLVIVinSJshCxiKj82/5SFRNHDzmCDrmix3jkNBFT/waJQMeSTRgAYQ6fH4fAmKhghob35TVcwdl9U9F2g21gQN5ouA9aF7pkizZUkLFVnUH02Go8md3Ah9P2n8T+z0eOZFQ1/m4BzLNCErWph4CkMBcVUzU+7JBUpvCycAUqZyMOoZ6C+1e8DsRrCYUOSDHCpG24j7Fb2iwarbLB3DfjYlp1lvGA5WUHkGYolLI3ADwEhI6layrQK0YmQSRFnIi2U2Lx0HFa4YSmKaFmzHEJrQWkGZmJ44SRXO83dmD/+3lrg61OEfGZk9arL8/uR1f5QZCE83H/0LGQHn10t738=</diagram>
+﻿<?xml version="1.0" encoding="utf-8"?>
+<mxfile host="drawio" version="26.0.0">
+  <diagram id="modes" name="1 - Project operating modes">
+    <mxGraphModel grid="1" pageWidth="1100" page="1" dy="850" pageScale="1" background="#ffffff" pageHeight="850" dx="1100" gridSize="10">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="modes-title" style="whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=16;fontColor=#243247;text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=28;" parent="1" vertex="1" value="&lt;b&gt;PROJECT OPERATING MODES&lt;/b&gt;">
+          <mxGeometry y="35" height="45" as="geometry" x="70" width="950" />
+        </mxCell>
+        <mxCell id="modes-subtitle" style="whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=16;fontColor=#243247;text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=15;" parent="1" vertex="1" value="CO3010 / Lab 3   ·   lib/fsm   ·   One debounced button-1 event per transition">
+          <mxGeometry y="85" height="35" as="geometry" x="70" width="950" />
+        </mxCell>
+        <mxCell id="modes-init" style="whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=16;fontColor=#243247;ellipse;fillColor=#243247;strokeColor=#243247;" parent="1" vertex="1" value="">
+          <mxGeometry y="230" height="20" as="geometry" x="90" width="20" />
+        </mxCell>
+        <mxCell id="mode-normal" style="whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=16;fontColor=#243247;rounded=1;arcSize=12;strokeWidth=2;spacing=16;fillColor=#e6f0ff;strokeColor=#557db1;" parent="1" vertex="1" value="&lt;b&gt;NORMAL · mode 1&lt;/b&gt;&lt;br&gt;FSM_NORMAL&lt;br&gt;&lt;br&gt;Display mode 1">
+          <mxGeometry y="180" height="150" as="geometry" x="160" width="310" />
+        </mxCell>
+        <mxCell id="mode-red" style="whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=16;fontColor=#243247;rounded=1;arcSize=12;strokeWidth=2;spacing=16;fillColor=#fde9e7;strokeColor=#bb6760;" parent="1" vertex="1" value="&lt;b&gt;SET RED · mode 2&lt;/b&gt;&lt;br&gt;FSM_SET_RED&lt;br&gt;&lt;br&gt;Display mode 2">
+          <mxGeometry y="180" height="150" as="geometry" x="650" width="310" />
+        </mxCell>
+        <mxCell id="mode-amber" style="whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=16;fontColor=#243247;rounded=1;arcSize=12;strokeWidth=2;spacing=16;fillColor=#fff3cd;strokeColor=#b99530;" parent="1" vertex="1" value="&lt;b&gt;SET AMBER · mode 3&lt;/b&gt;&lt;br&gt;FSM_SET_AMBER&lt;br&gt;&lt;br&gt;Display mode 3">
+          <mxGeometry y="460" height="150" as="geometry" x="650" width="310" />
+        </mxCell>
+        <mxCell id="mode-green" style="whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=16;fontColor=#243247;rounded=1;arcSize=12;strokeWidth=2;spacing=16;fillColor=#e5f3e9;strokeColor=#589269;" parent="1" vertex="1" value="&lt;b&gt;SET GREEN · mode 4&lt;/b&gt;&lt;br&gt;FSM_SET_GREEN&lt;br&gt;&lt;br&gt;Display mode 4">
+          <mxGeometry y="460" height="150" as="geometry" x="160" width="310" />
+        </mxCell>
+        <mxCell edge="1" id="modes-initial" source="modes-init" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#52657c;fontFamily=Arial;fontSize=14;fontColor=#243247;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="mode-normal" parent="1" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell edge="1" id="modes-1-2" source="mode-normal" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#52657c;fontFamily=Arial;fontSize=14;fontColor=#243247;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="mode-red" parent="1" value="Button 1 pressed">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell edge="1" id="modes-2-3" source="mode-red" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#52657c;fontFamily=Arial;fontSize=14;fontColor=#243247;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=0;" target="mode-amber" parent="1" value="Button 1 pressed">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell edge="1" id="modes-3-4" source="mode-amber" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#52657c;fontFamily=Arial;fontSize=14;fontColor=#243247;labelBackgroundColor=#ffffff;exitX=0;exitY=0.5;entryX=1;entryY=0.5;" target="mode-green" parent="1" value="Button 1 pressed">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell edge="1" id="modes-4-1" source="mode-green" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#52657c;fontFamily=Arial;fontSize=14;fontColor=#243247;labelBackgroundColor=#ffffff;exitX=0.5;exitY=0;entryX=0.5;entryY=1;" target="mode-normal" parent="1" value="Button 1 pressed">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="modes-hold" style="whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=16;fontColor=#243247;text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=14;" parent="1" vertex="1" value="No press event: keep the current mode. A held button does not auto-repeat.&lt;br&gt;Invalid mode + press event: return to NORMAL.">
+          <mxGeometry y="650" height="60" as="geometry" x="160" width="800" />
+        </mxCell>
+        <mxCell id="modes-planned" style="whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=16;fontColor=#243247;rounded=1;arcSize=12;strokeWidth=2;spacing=16;dashed=1;fillColor=#f8fafc;strokeColor=#a8b3c1;fontSize=14;align=left;" parent="1" vertex="1" value="&lt;b&gt;PLANNED IN THE REPORT — NOT IMPLEMENTED&lt;/b&gt;&lt;br&gt;In a setting mode: button 2 proposes a duration; button 3 confirms it.&lt;br&gt;Blink the selected color at 2 Hz and display mode + proposed duration.&lt;br&gt;NORMAL will use the traffic subsystem; that subsystem is not yet wired into main.c.">
+          <mxGeometry y="735" height="100" as="geometry" x="160" width="800" />
+        </mxCell>
+        <mxCell id="modes-init-label" value="FSM_Init" vertex="1" parent="1" style="text;html=1;align=left;fontFamily=Arial;fontSize=14;fontColor=#243247;">
+          <mxGeometry width="85" height="25" as="geometry" x="75" y="195" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="traffic" name="2 - Traffic light FSM and lifecycle">
+    <mxGraphModel grid="1" pageWidth="1100" page="1" dy="850" pageScale="1" background="#ffffff" pageHeight="850" dx="1100" gridSize="10">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="traffic-title" style="whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=16;fontColor=#243247;text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=28;" parent="1" vertex="1" value="&lt;b&gt;TRAFFIC SUBSYSTEM&lt;/b&gt;">
+          <mxGeometry y="35" height="45" as="geometry" x="70" width="950" />
+        </mxCell>
+        <mxCell id="traffic-subtitle" style="whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=16;fontColor=#243247;text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=15;" parent="1" vertex="1" value="lib/traffic_light   ·   Two instances: straight and cross   ·   Separate 1-second software timers">
+          <mxGeometry y="85" height="35" as="geometry" x="70" width="950" />
+        </mxCell>
+        <mxCell id="traffic-paused" style="whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=16;fontColor=#243247;rounded=1;arcSize=12;strokeWidth=2;spacing=16;fillColor=#eef1f5;strokeColor=#8896a8;" parent="1" vertex="1" value="&lt;b&gt;PAUSED&lt;/b&gt;&lt;br&gt;running = 0&lt;br&gt;Timers disabled; countdowns frozen">
+          <mxGeometry y="175" height="115" as="geometry" x="160" width="310" />
+        </mxCell>
+        <mxCell id="traffic-running" style="whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=16;fontColor=#243247;rounded=1;arcSize=12;strokeWidth=2;spacing=16;fillColor=#e6f0ff;strokeColor=#557db1;" parent="1" vertex="1" value="&lt;b&gt;RUNNING&lt;/b&gt;&lt;br&gt;running = 1&lt;br&gt;Each timer tick subtracts 1 second">
+          <mxGeometry y="175" height="115" as="geometry" x="650" width="310" />
+        </mxCell>
+        <mxCell edge="1" id="traffic-start" source="traffic-paused" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#52657c;fontFamily=Arial;fontSize=14;fontColor=#243247;labelBackgroundColor=#ffffff;exitX=1;exitY=0.3;entryX=0;entryY=0.3;" target="traffic-running" parent="1" value="Start">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell edge="1" id="traffic-reset" source="traffic-running" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#52657c;fontFamily=Arial;fontSize=14;fontColor=#243247;labelBackgroundColor=#ffffff;exitX=0;exitY=0.8;entryX=1;entryY=0.8;" target="traffic-paused" parent="1" value="Reset: restore defaults">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="traffic-reset-note" style="whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=16;fontColor=#243247;text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=14;" parent="1" vertex="1" value="Init / Reset: straight = GREEN, cross = RED; countdowns = green_s and green_s + yellow_s.&lt;br&gt;Clear timeout flags and leave paused. Start explicitly arms both 1-second timers.">
+          <mxGeometry y="315" height="65" as="geometry" x="160" width="800" />
+        </mxCell>
+        <mxCell id="light-red" style="whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=16;fontColor=#243247;rounded=1;arcSize=12;strokeWidth=2;spacing=16;fillColor=#fde9e7;strokeColor=#bb6760;" parent="1" vertex="1" value="&lt;b&gt;RED&lt;/b&gt;&lt;br&gt;&lt;br&gt;remaining_s =&lt;br&gt;green_s + yellow_s">
+          <mxGeometry y="490" height="130" as="geometry" x="100" width="220" />
+        </mxCell>
+        <mxCell id="light-green" style="whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=16;fontColor=#243247;rounded=1;arcSize=12;strokeWidth=2;spacing=16;fillColor=#e5f3e9;strokeColor=#589269;" parent="1" vertex="1" value="&lt;b&gt;GREEN&lt;/b&gt;&lt;br&gt;&lt;br&gt;remaining_s = green_s">
+          <mxGeometry y="490" height="130" as="geometry" x="445" width="220" />
+        </mxCell>
+        <mxCell id="light-yellow" style="whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=16;fontColor=#243247;rounded=1;arcSize=12;strokeWidth=2;spacing=16;fillColor=#fff3cd;strokeColor=#b99530;" parent="1" vertex="1" value="&lt;b&gt;YELLOW&lt;/b&gt;&lt;br&gt;&lt;br&gt;remaining_s = yellow_s">
+          <mxGeometry y="490" height="130" as="geometry" x="790" width="220" />
+        </mxCell>
+        <mxCell edge="1" id="light-red-green" source="light-red" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#52657c;fontFamily=Arial;fontSize=14;fontColor=#243247;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="light-green" parent="1" value="timeout_flag">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell edge="1" id="light-green-yellow" source="light-green" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#52657c;fontFamily=Arial;fontSize=14;fontColor=#243247;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=0;entryY=0.5;" target="light-yellow" parent="1" value="timeout_flag">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell edge="1" id="light-yellow-red" source="light-yellow" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#52657c;fontFamily=Arial;fontSize=14;fontColor=#243247;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;entryX=0.5;entryY=1;" target="light-red" parent="1" value="timeout_flag">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="900" y="690" />
+              <mxPoint x="210" y="690" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="traffic-flags" style="whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=16;fontColor=#243247;text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=14;" parent="1" vertex="1" value="Set timeout_flag when remaining_s reaches 0. Each transition consumes its flag.&lt;br&gt;Run both FSMs before applying outputs; switch both old outputs off before enabling new colors.">
+          <mxGeometry y="735" height="60" as="geometry" x="100" width="910" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
 </mxfile>

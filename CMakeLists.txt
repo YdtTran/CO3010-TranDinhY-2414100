@@ -38,6 +38,9 @@ add_executable(${CMAKE_PROJECT_NAME}
     lib/seg7_display/seg7_display.c
     lib/led_matrix/led_matrix.c
     lib/software_timer/software_timer.c
+    lib/button/button.c
+    src/input_reading.c
+    src/output_display.c
 
 )
 
@@ -56,6 +59,7 @@ target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
     lib/seg7_display
     lib/led_matrix
     lib/software_timer
+    lib/button
 
 )
 

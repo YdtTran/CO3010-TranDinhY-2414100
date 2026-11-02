@@ -104,3 +104,37 @@ checks actual timer functions for early expiry, one-shot flag consumption, short
 durations, zero and invalid indices. This target self-check is compiled at 1,
 10 and 100 ms separately; execution requires test firmware on STM32/Proteus and
 has not been performed here. The indicator waveform also requires simulation.
+
+## 5.6 Exercise 5: Button debouncing and mode selection
+
+New input_reading.c/.h and output_display.c/.h files separate input sampling and
+display output. The reusable button library accepts a press or release only
+after three identical samples. INPUT_ModePressed polls using HAL_GetTick every
+10 ms, independently of TIM2; a stable transition takes approximately 20-30 ms.
+The main loop must remain nonblocking to preserve this sampling cadence.
+
+Button 1 (PB13, active low) generates one event per press. Auto-repeat is disabled
+so holding the button does not advance modes repeatedly. Both scanning and event
+consumption run in the main loop, avoiding interrupt/main flag races. Each event
+advances mode = mode % 4 + 1: NORMAL (1), RED setting (2), AMBER setting (3), GREEN
+setting (4), then NORMAL. Buttons 2/3 and the full traffic FSM are deferred to
+later exercises; this exercise implements mode selection only.
+
+OUTPUT_ShowMode blanks both enables before changing segments, then enables the
+first pair. Digits 0 and 2 show the same mode, while digits 1 and 3 stay blank,
+matching the shared-enable limitation. D15 continues the exercise-4 blink.
+
+Validation: firmware compiles and links. tests/button_selfcheck.c covers bouncing,
+press flag consumption, holding without repeats, debounced release and repress.
+The standalone test is cross-compiled, with a fake GPIO reader; it is not linked
+into normal firmware and was not executed on a target. Manual Proteus checks:
+press button 1 repeatedly to observe 1 -> 2 -> 3 -> 4 -> 1, hold for one second
+(no further advance), then release and repress. Recheck the D15 blink at TIM2
+intervals 1, 10 and 100 ms. Simulation has not been run in this environment.
+
+## Incremental branch layout
+
+l03/ex1 -> l03/ex2 -> l03/ex3 -> l03/ex4 -> l03/ex5. Each branch includes the
+preceding reports and implementation only. Universal libraries can be present
+before use. The untouched pre-split working tree is preserved in
+backup/l03-before-exercise-split, including Proteus backups/workspace files.

@@ -23,6 +23,8 @@
 /* USER CODE BEGIN Includes */
 #include "pin.h"
 #include "software_timer.h"
+#include "input_reading.h"
+#include "output_display.h"
 
 
 /* USER CODE END Includes */
@@ -47,6 +49,7 @@ TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
 static uint32_t blink_elapsed_ms;
+static uint8_t mode = 1U;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -93,6 +96,8 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
+  INPUT_Init();
+  OUTPUT_ShowMode(mode);
   /* TIM2 period follows TICK_INTERVAL_MS; indicator toggles every 250 ms. */
   if (HAL_TIM_Base_Start_IT(&htim2) != HAL_OK)
   {
@@ -106,7 +111,11 @@ int main(void)
   {
     /* USER CODE END WHILE */
     /* USER CODE BEGIN 3 */
-    /* GPIO and TIM2 setup only; application behavior follows in exercise 4. */
+    if (INPUT_ModePressed())
+    {
+      mode = mode % 4U + 1U;
+      OUTPUT_ShowMode(mode);
+    }
   }
   /* USER CODE END 3 */
 }

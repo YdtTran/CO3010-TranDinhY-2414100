@@ -60,3 +60,24 @@ Validation: the Proteus project archive opens structurally and contains ROOT.DSN
 and ROOT.CDB. Firmware still builds. No Proteus simulation or electrical/net
 connectivity validation was run; compare the pin table with the drawing before
 hardware use. No Lab 3 GPIO or timer application is introduced on this branch.
+
+## 5.4 Exercise 3: Create STM32 project
+
+CO3010.ioc and src/pin.h describe the pin table above. main.c configures the
+outputs off before switching their GPIO modes, configures PB13-PB15 as pull-up
+inputs, and releases the debug pins. The project uses the existing HAL, GNU Arm
+C11 toolchain and CMake/Ninja build.
+
+HSI/2 times PLL multiplier 9 gives SYSCLK = 36 MHz. APB1 runs at 18 MHz, so its
+timer clock is doubled to 36 MHz. TIM2 prescaler 35999 and ARR 9 give:
+
+    T = (35999 + 1) * (9 + 1) / 36000000 = 0.010 s
+
+HAL_TIM_Base_Start_IT starts TIM2 after GPIO initialization. TIM2_IRQHandler
+calls HAL_TIM_IRQHandler, and HAL_TIM_PeriodElapsedCallback increments tick_count
+only for TIM2. Observe tick_count in a debugger: it should advance by about 100
+per second. No button reader, mode control or application scheduling runs yet.
+
+Validation: ninja -C build/Debug compiles and links the firmware and emits
+build/Debug/CO3010.hex. Interrupt cadence has not been measured in Proteus or on
+hardware. Load this HEX in U1's Program File property when simulating.

@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "pin.h"
+#include "software_timer.h"
 
 
 /* USER CODE END Includes */
@@ -45,7 +46,7 @@
 TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
-static volatile uint32_t tick_count;
+static uint32_t blink_elapsed_ms;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -92,7 +93,7 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  /* 36 MHz / (35999 + 1) / (9 + 1) = 100 Hz (10 ms). */
+  /* TIM2 period follows TICK_INTERVAL_MS; indicator toggles every 250 ms. */
   if (HAL_TIM_Base_Start_IT(&htim2) != HAL_OK)
   {
     Error_Handler();
@@ -187,6 +188,9 @@ static void MX_TIM2_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN TIM2_Init 2 */
+  /* Prescaler gives a 1 kHz counter; override CubeMX ARR in a preserved block. */
+  __HAL_TIM_SET_AUTORELOAD(&htim2, TICK_INTERVAL_MS - 1U);
+  __HAL_TIM_SET_COUNTER(&htim2, 0U);
 
   /* USER CODE END TIM2_Init 2 */
 }
@@ -239,7 +243,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   if (htim->Instance == TIM2)
   {
-    tick_count++;
+    SOFT_TIMER_Run();
+    blink_elapsed_ms += TICK_INTERVAL_MS;
+    if (blink_elapsed_ms >= 250U)
+    {
+      /* Carry the remainder to avoid drift when 250 is not a multiple of tick. */
+      blink_elapsed_ms -= 250U;
+      HAL_GPIO_TogglePin(INDICATOR_PORT, INDICATOR);
+    }
 
   }
 }

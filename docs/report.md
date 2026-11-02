@@ -81,3 +81,26 @@ per second. No button reader, mode control or application scheduling runs yet.
 Validation: ninja -C build/Debug compiles and links the firmware and emits
 build/Debug/CO3010.hex. Interrupt cadence has not been measured in Proteus or on
 hardware. Load this HEX in U1's Program File property when simulating.
+
+## 5.5 Exercise 4: Modify timer parameters
+
+Change only TICK_INTERVAL_MS in lib/software_timer/software_timer.h (1, 10 or
+100). The prescaler remains 35999, producing a 1 kHz counter. A CubeMX USER CODE
+block overrides ARR with TICK_INTERVAL_MS - 1 after timer initialization. The
+IOC retains the default 10 ms setup; runtime configuration is authoritative.
+
+TIM2 accumulates elapsed milliseconds and toggles PA5/D15 whenever 250 ms has
+elapsed. Carrying the remainder preserves the average 500 ms full period (2 Hz).
+At 1 and 10 ms, edges land exactly on 250 ms boundaries. At 100 ms, half-periods
+alternate 300/200 ms. Exact uniform 250 ms edges are impossible using only 100 ms
+interrupt boundaries; a finer interrupt or hardware output compare is needed.
+
+Software timers now store milliseconds and expire on the first interrupt at or
+after their deadline, including durations shorter than a tick. Zero disables a
+timer. Callers do not need to convert duration arguments when the tick changes.
+
+Validation: firmware builds at the default interval. tests/timer_selfcheck.c
+checks actual timer functions for early expiry, one-shot flag consumption, short
+durations, zero and invalid indices. This target self-check is compiled at 1,
+10 and 100 ms separately; execution requires test firmware on STM32/Proteus and
+has not been performed here. The indicator waveform also requires simulation.

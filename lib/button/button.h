@@ -39,7 +39,8 @@ void BUTTON_Scan(button_handle_t *button);
 /* Read the debounced state from the main loop; reading does not clear it. */
 button_state_t BUTTON_GetState(const button_handle_t *button);
 
-/* Return and clear the pending press flag; scanning sets it on press/repeat. */
-uint8_t BUTTON_IsPress(button_handle_t *button);
+/* Read without clearing; scanning sets the flag on press/repeat. */
+uint8_t BUTTON_GetPressFlag(const button_handle_t *button);
+void BUTTON_ClearPressFlag(button_handle_t *button);
 
 #endif /* BUTTON_H */

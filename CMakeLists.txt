@@ -33,7 +33,11 @@ enable_language(C ASM)
 
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME}
-    lib/fsm/fsm.c
+    src/global.c
+    src/fsm.c
+    src/fsm_automatic.c
+    src/fsm_manual.c
+    src/fsm_setting.c
     lib/traffic_light/traffic_light.c
     lib/seg7/seg7.c
     lib/seg7_display/seg7_display.c
@@ -53,7 +57,6 @@ target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
 
 # Add include paths
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    lib/fsm
     lib/seg7
     lib/traffic_light
     lib/seg7_display

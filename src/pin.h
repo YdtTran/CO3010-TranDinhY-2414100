@@ -9,13 +9,13 @@
 #define INDICATOR_ACTIVE_STATE GPIO_PIN_RESET
 
 /* SEG[0..6] = A..G, common anode, active LOW.
- * PA8..PA14: package pins 29, 30, 31, 32, 33, 34, 37.
- * PA13..PA14 require debug disabled (SYS No Debug in CO3010.ioc).
+ * PA9..PA15: package pins 30, 31, 32, 33, 34, 37, 38.
+ * PA13..PA15 require debug disabled (SYS No Debug in CO3010.ioc).
  */
 #define SEG_PORT GPIOA
 static const uint32_t SEG[7] = {
-    GPIO_PIN_8, GPIO_PIN_9, GPIO_PIN_10, GPIO_PIN_11,
-    GPIO_PIN_12, GPIO_PIN_13, GPIO_PIN_14};
+    GPIO_PIN_9, GPIO_PIN_10, GPIO_PIN_11, GPIO_PIN_12,
+    GPIO_PIN_13, GPIO_PIN_14, GPIO_PIN_15};
 #define SEG_ACTIVE_STATE GPIO_PIN_RESET
 
 /* Traffic LEDs: indices 0/1/2 = green/yellow/red, active HIGH.
@@ -37,16 +37,12 @@ static const uint32_t BTN[3] = {
 #define BTN_ACTIVE_STATE GPIO_PIN_RESET
 #define BTN_PULL GPIO_PULLUP
 
-/* Chosen GPIO assignments: EN0 = PA0 (pin 10), EN1 = PA1 (pin 11).
- * EN0 drives Q3/R39 and Q1/R13: DIGIT0 and DIGIT2.
- * EN1 drives Q4/R40 and Q2/R14: DIGIT1 and DIGIT3.
- * PNP drivers source +3V3 through 1-kohm base resistors, active LOW.
- * The paired digits share enables; they cannot be selected independently.
+/* EN0..EN3 = PB6..PB9 (package pins 42, 43, 45, 46).
+ * Each PNP driver independently enables one digit, active LOW.
  */
-#define EN_PORT GPIOA
-static const uint32_t EN[2] = {
-    GPIO_PIN_0, GPIO_PIN_1};
-static const uint32_t DIGIT_EN[4] = {0U, 1U, 0U, 1U};
+#define EN_PORT GPIOB
+static const uint32_t EN[4] = {
+    GPIO_PIN_6, GPIO_PIN_7, GPIO_PIN_8, GPIO_PIN_9};
 #define EN_ACTIVE_STATE GPIO_PIN_RESET
 
 #endif /* PIN_H */

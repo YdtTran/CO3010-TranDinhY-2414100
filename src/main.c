@@ -23,13 +23,13 @@
 /* USER CODE BEGIN Includes */
 #include "pin.h"
 #include "software_timer.h"
-#include "traffic_light.h"
+#include "fsm.h"
 
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+enum { DISPLAY_TIMER = 1, INDICATOR_TIMER = 2 };
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -46,11 +46,7 @@
 TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
-enum
-{
-  INDICATOR_TIMER = 2U
-};
-static traffic_system_t traffic_system;
+static fsm_t fsm;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -63,7 +59,6 @@ static void MX_TIM2_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
 /* USER CODE END 0 */
 
 /**
@@ -97,17 +92,8 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  traffic_system.straight = (traffic_light_t){
-      .port = L_PORT, .gpio = {L[0], L[1], L[2]}, .timer_index = 0U};
-  traffic_system.cross = (traffic_light_t){
-      .port = T_PORT, .gpio = {T[0], T[1], T[2]}, .timer_index = 1U};
-  traffic_system.green_s = 2U;
-  traffic_system.yellow_s = 3U; /* Red lasts green + yellow = 5 seconds. */
-  if (!TRAFFIC_SYSTEM_Init(&traffic_system))
-  {
-    Error_Handler();
-  }
-  TRAFFIC_SYSTEM_Start(&traffic_system);
+  FSM_Init(&fsm);
+  SOFT_TIMER_Set(DISPLAY_TIMER, 20U);
   SOFT_TIMER_Set(INDICATOR_TIMER, 250U);
   /* TIM2 period follows TICK_INTERVAL_MS; indicator toggles every 250 ms. */
   if (HAL_TIM_Base_Start_IT(&htim2) != HAL_OK)
@@ -122,8 +108,17 @@ int main(void)
   {
     /* USER CODE END WHILE */
     /* USER CODE BEGIN 3 */
-    /* Keep both traffic timers synchronized while consuming and rearming them. */
-    TRAFFIC_SYSTEM_Run(&traffic_system);
+    FSM_CollectEvents();
+    FSM_Dispatch();
+    FSM_Automatic_Run();
+    FSM_Manual_Run();
+    FSM_Setting_Run();
+    FSM_UpdateDisplay();
+    if (SOFT_TIMER_Expired(DISPLAY_TIMER))
+    {
+      SEG7_Scan(&fsm.display);
+      SOFT_TIMER_Set(DISPLAY_TIMER, 20U);
+    }
     if (SOFT_TIMER_Expired(INDICATOR_TIMER))
     {
       HAL_GPIO_TogglePin(INDICATOR_PORT, INDICATOR);
@@ -210,10 +205,10 @@ static void MX_TIM2_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN TIM2_Init 2 */
-  /* Keep the working l02_ex6 setup at 10 ms; override only for another tick. */
-#if TICK_INTERVAL_MS != 10U
-  __HAL_TIM_SET_AUTORELOAD(&htim2, TICK_INTERVAL_MS - 1U);
-#endif
+  /* Avoid Proteus timing error with very small ARR values. */
+  __HAL_TIM_SET_PRESCALER(&htim2, 359U);
+  __HAL_TIM_SET_AUTORELOAD(&htim2, TICK_INTERVAL_MS * 100U - 1U);
+  htim2.Instance->EGR = TIM_EGR_UG;
   __HAL_TIM_SET_COUNTER(&htim2, 0U);
   __HAL_TIM_CLEAR_FLAG(&htim2, TIM_FLAG_UPDATE);
 
@@ -239,13 +234,15 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /* Keep common-anode segments, PNP drivers and D15 off at startup. */
-  const uint32_t outputs_a = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_5 |
-                             GPIO_PIN_8 | GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11 |
-                             GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14;
+  const uint32_t outputs_a = GPIO_PIN_5 |
+                             GPIO_PIN_9 | GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12 |
+                             GPIO_PIN_13 | GPIO_PIN_14 | GPIO_PIN_15;
   const uint32_t outputs_b = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 |
-                             GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5;
+                             GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5 |
+                             GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_8 | GPIO_PIN_9;
   HAL_GPIO_WritePin(GPIOA, outputs_a, GPIO_PIN_SET);
-  HAL_GPIO_WritePin(GPIOB, outputs_b, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 | GPIO_PIN_5, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(EN_PORT, EN[0] | EN[1] | EN[2] | EN[3], GPIO_PIN_SET);
 
   GPIO_InitStruct.Pin = outputs_a;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;

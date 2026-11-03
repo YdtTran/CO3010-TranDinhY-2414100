@@ -58,9 +58,12 @@ button_state_t BUTTON_GetState(const button_handle_t *button)
     return button->state;
 }
 
-uint8_t BUTTON_IsPress(button_handle_t *button)
+uint8_t BUTTON_GetPressFlag(const button_handle_t *button)
 {
-    uint8_t pressed = button->press_flag;
+    return button->press_flag;
+}
+
+void BUTTON_ClearPressFlag(button_handle_t *button)
+{
     button->press_flag = 0;
-    return pressed;
 }

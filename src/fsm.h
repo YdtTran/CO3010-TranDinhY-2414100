@@ -2,9 +2,11 @@
 #define FSM_H
 #include "global.h"
 void FSM_Init(fsm_t *fsm);
-void FSM_CollectEvents(void);
-void FSM_Dispatch(void);
-void FSM_UpdateDisplay(void);
+/* Call once per TIM2 tick, after FSM_Init. */
+void FSM_ScanButtons(void);
+void FSM_ClearButtons(void);
+/* Service outputs after all three mode FSMs run. */
+void FSM_ServiceOutputs(void);
 /* Shared output operation; each mode owns its phase sequencing. */
 void FSM_SetPhase(uint8_t phase);
 void FSM_Automatic_Init(void);

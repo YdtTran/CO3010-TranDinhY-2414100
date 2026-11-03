@@ -29,7 +29,6 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-enum { DISPLAY_TIMER = 1, INDICATOR_TIMER = 2 };
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -93,8 +92,6 @@ int main(void)
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
   FSM_Init(&fsm);
-  SOFT_TIMER_Set(DISPLAY_TIMER, 20U);
-  SOFT_TIMER_Set(INDICATOR_TIMER, 250U);
   /* TIM2 period follows TICK_INTERVAL_MS; indicator toggles every 250 ms. */
   if (HAL_TIM_Base_Start_IT(&htim2) != HAL_OK)
   {
@@ -108,22 +105,10 @@ int main(void)
   {
     /* USER CODE END WHILE */
     /* USER CODE BEGIN 3 */
-    FSM_CollectEvents();
-    FSM_Dispatch();
     FSM_Automatic_Run();
     FSM_Manual_Run();
     FSM_Setting_Run();
-    FSM_UpdateDisplay();
-    if (SOFT_TIMER_Expired(DISPLAY_TIMER))
-    {
-      SEG7_Scan(&fsm.display);
-      SOFT_TIMER_Set(DISPLAY_TIMER, 20U);
-    }
-    if (SOFT_TIMER_Expired(INDICATOR_TIMER))
-    {
-      HAL_GPIO_TogglePin(INDICATOR_PORT, INDICATOR);
-      SOFT_TIMER_Set(INDICATOR_TIMER, 250U);
-    }
+    FSM_ServiceOutputs();
   }
   /* USER CODE END 3 */
 }
@@ -206,10 +191,10 @@ static void MX_TIM2_Init(void)
   }
   /* USER CODE BEGIN TIM2_Init 2 */
   /* Avoid Proteus timing error with very small ARR values. */
-  __HAL_TIM_SET_PRESCALER(&htim2, 359U);
-  __HAL_TIM_SET_AUTORELOAD(&htim2, TICK_INTERVAL_MS * 100U - 1U);
+  __HAL_TIM_SET_PRESCALER(&htim2, 359);
+  __HAL_TIM_SET_AUTORELOAD(&htim2, TICK_INTERVAL_MS * 100 - 1);
   htim2.Instance->EGR = TIM_EGR_UG;
-  __HAL_TIM_SET_COUNTER(&htim2, 0U);
+  __HAL_TIM_SET_COUNTER(&htim2, 0);
   __HAL_TIM_CLEAR_FLAG(&htim2, TIM_FLAG_UPDATE);
 
   /* USER CODE END TIM2_Init 2 */
@@ -266,6 +251,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   if (htim->Instance == TIM2)
   {
     SOFT_TIMER_Run();
+    FSM_ScanButtons();
   }
 }
 /* USER CODE END 4 */

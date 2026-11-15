@@ -1,112 +1,152 @@
-#include "fsm.h"
+#include "fsm_setting.h"
 #include "software_timer.h"
-static uint8_t draft, blink_on;
-static void show_lights(void)
+
+void FSM_Setting_Run(void)
 {
-    static const light_state_t colors[] = {LED_RED, LED_YELLOW, LED_GREEN};
-    TRAFFIC_LIGHT_SetColor(&app->straight, LED_OFF);
-    TRAFFIC_LIGHT_SetColor(&app->cross, LED_OFF);
-    if (blink_on)
-    {
-        TRAFFIC_LIGHT_SetColor(&app->straight, colors[app->state - SET_RED]);
-        TRAFFIC_LIGHT_SetColor(&app->cross, colors[app->state - SET_RED]);
-    }
-}
-static void enter_edit(fsm_state_t state)
-{
-    app->state = state;
     switch (state)
     {
     case SET_RED:
-        draft = app->green_s + app->yellow_s;
+        if (blink_on)
+        {
+            TRAFFIC_LIGHT_SetColor(&light_system, LED_RED, LED_RED);
+        }
+        else
+        {
+            TRAFFIC_LIGHT_SetColor(&light_system, LED_OFF, LED_OFF);
+        }
+        if (SOFT_TIMER_Expired(BLINK_TIMER))
+        {
+            blink_on = !blink_on;
+            SOFT_TIMER_Set(BLINK_TIMER, 250);
+        }
+        if (BUTTON_GetPressFlag(&buttons[1]))
+        {
+            BUTTON_ClearPressFlag(&buttons[1]);
+            ++draft;
+            if (draft > 99)
+                draft = yellow_s + 1;
+            SEG7_SetNumbers(&seg7_display, 2, draft);
+        }
+        if (BUTTON_GetPressFlag(&buttons[2]))
+        {
+            BUTTON_ClearPressFlag(&buttons[2]);
+            if (draft > yellow_s && draft <= 99)
+            {
+                green_s = draft - yellow_s;
+                state = SET_YELLOW;
+                draft = yellow_s;
+                blink_on = 1;
+
+                SEG7_SetNumbers(&seg7_display, 3, draft);
+                SOFT_TIMER_Set(BLINK_TIMER, 250);
+            }
+        }
+        if (BUTTON_GetPressFlag(&buttons[0]))
+        {
+            BUTTON_ClearPressFlags(buttons, 3);
+            state = AUTO_GREEN;
+            SOFT_TIMER_Set(BLINK_TIMER, 0);
+            SEG7_SetNumbers(&seg7_display, green_s, green_s + yellow_s);
+            SOFT_TIMER_Set(TRAFFIC_TIMER, green_s * 1000);
+            SOFT_TIMER_Set(COUNTDOWN_TIMER, 1000);
+        }
         break;
+
     case SET_YELLOW:
-        draft = app->yellow_s;
-        break;
-    default:
-        draft = app->green_s;
-        break;
-    }
-    blink_on = 1;
-    show_lights();
-    SOFT_TIMER_Set(BLINK_TIMER, 250);
-}
-void FSM_Setting_Init(void)
-{
-    FSM_ClearButtons();
-    SOFT_TIMER_Set(TRAFFIC_TIMER, 0);
-    enter_edit(SET_RED);
-}
-void FSM_Setting_Run(void)
-{
-    switch (app->state)
-    {
-    case SET_RED:
-        if (BUTTON_GetPressFlag(&app->buttons[0]))
+        if (blink_on)
         {
-            FSM_Automatic_Init();
-            return;
+            TRAFFIC_LIGHT_SetColor(&light_system, LED_YELLOW, LED_YELLOW);
         }
-        if (BUTTON_GetPressFlag(&app->buttons[1]))
+        else
         {
-            BUTTON_ClearPressFlag(&app->buttons[1]);
-            draft = draft % 99 + 1;
+            TRAFFIC_LIGHT_SetColor(&light_system, LED_OFF, LED_OFF);
         }
-        if (BUTTON_GetPressFlag(&app->buttons[2]))
+        if (SOFT_TIMER_Expired(BLINK_TIMER))
         {
-            BUTTON_ClearPressFlag(&app->buttons[2]);
-            app->green_s = draft > app->yellow_s ? draft - app->yellow_s : 0;
-            enter_edit(SET_YELLOW);
+            blink_on = !blink_on;
+            SOFT_TIMER_Set(BLINK_TIMER, 250);
         }
-        break;
-    case SET_YELLOW:
-        if (BUTTON_GetPressFlag(&app->buttons[0]))
+        if (BUTTON_GetPressFlag(&buttons[1]))
         {
-            FSM_Automatic_Init();
-            return;
+            BUTTON_ClearPressFlag(&buttons[1]);
+            ++draft;
+            if (draft > 99 - green_s)
+                draft = 1;
+            SEG7_SetNumbers(&seg7_display, 3, draft);
         }
-        if (BUTTON_GetPressFlag(&app->buttons[1]))
+        if (BUTTON_GetPressFlag(&buttons[2]))
         {
-            BUTTON_ClearPressFlag(&app->buttons[1]);
-            draft = draft % 99 + 1;
+            BUTTON_ClearPressFlag(&buttons[2]);
+            if (draft > 0 && green_s + draft <= 99)
+            {
+                yellow_s = draft;
+                state = SET_GREEN;
+                draft = green_s;
+                blink_on = 1;
+
+                SEG7_SetNumbers(&seg7_display, 4, draft);
+                SOFT_TIMER_Set(BLINK_TIMER, 250);
+            }
         }
-        if (BUTTON_GetPressFlag(&app->buttons[2]))
+        if (BUTTON_GetPressFlag(&buttons[0]))
         {
-            BUTTON_ClearPressFlag(&app->buttons[2]);
-            app->yellow_s = draft;
-            enter_edit(SET_GREEN);
+            BUTTON_ClearPressFlags(buttons, 3);
+            state = AUTO_GREEN;
+            SOFT_TIMER_Set(BLINK_TIMER, 0);
+            SEG7_SetNumbers(&seg7_display, green_s, green_s + yellow_s);
+            SOFT_TIMER_Set(TRAFFIC_TIMER, green_s * 1000);
+            SOFT_TIMER_Set(COUNTDOWN_TIMER, 1000);
         }
         break;
+
     case SET_GREEN:
-        if (BUTTON_GetPressFlag(&app->buttons[0]))
+        if (blink_on)
         {
-            FSM_Automatic_Init();
-            return;
+            TRAFFIC_LIGHT_SetColor(&light_system, LED_GREEN, LED_GREEN);
         }
-        if (BUTTON_GetPressFlag(&app->buttons[1]))
+        else
         {
-            BUTTON_ClearPressFlag(&app->buttons[1]);
-            draft = draft % 99 + 1;
+            TRAFFIC_LIGHT_SetColor(&light_system, LED_OFF, LED_OFF);
         }
-        if (BUTTON_GetPressFlag(&app->buttons[2]))
+        if (SOFT_TIMER_Expired(BLINK_TIMER))
         {
-            BUTTON_ClearPressFlag(&app->buttons[2]);
-            app->green_s = draft;
-            enter_edit(SET_RED);
+            blink_on = !blink_on;
+            SOFT_TIMER_Set(BLINK_TIMER, 250);
+        }
+        if (BUTTON_GetPressFlag(&buttons[1]))
+        {
+            BUTTON_ClearPressFlag(&buttons[1]);
+            ++draft;
+            if (draft > 99 - yellow_s)
+                draft = 1;
+            SEG7_SetNumbers(&seg7_display, 4, draft);
+        }
+        if (BUTTON_GetPressFlag(&buttons[2]))
+        {
+            BUTTON_ClearPressFlag(&buttons[2]);
+            if (draft > 0 && draft + yellow_s <= 99)
+            {
+                green_s = draft;
+                state = SET_RED;
+                draft = green_s + yellow_s;
+                blink_on = 1;
+
+                SEG7_SetNumbers(&seg7_display, 2, draft);
+                SOFT_TIMER_Set(BLINK_TIMER, 250);
+            }
+        }
+        if (BUTTON_GetPressFlag(&buttons[0]))
+        {
+            BUTTON_ClearPressFlags(buttons, 3);
+            state = AUTO_GREEN;
+            SOFT_TIMER_Set(BLINK_TIMER, 0);
+            SEG7_SetNumbers(&seg7_display, green_s, green_s + yellow_s);
+            SOFT_TIMER_Set(TRAFFIC_TIMER, green_s * 1000);
+            SOFT_TIMER_Set(COUNTDOWN_TIMER, 1000);
         }
         break;
+
     default:
-        return;
+        break;
     }
-    if (SOFT_TIMER_Expired(BLINK_TIMER))
-    {
-        blink_on = !blink_on;
-        show_lights();
-        SOFT_TIMER_Set(BLINK_TIMER, 250);
-    }
-    /* Preserve setting identifiers 02/03/04 for red/yellow/green. */
-    app->digits[0] = 0;
-    app->digits[1] = 2 + app->state - SET_RED;
-    app->digits[2] = draft / 10;
-    app->digits[3] = draft % 10;
 }

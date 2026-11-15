@@ -21,6 +21,9 @@ void SEG7_Init(seg7_display_t *display);
 void SEG7_Update(seg7_display_t *display, int index);
 // Copy display->num digit values into the display buffer.
 void SEG7_UpdateBuffer(seg7_display_t *display, const uint8_t *buffer);
+// Set two values (0..99) on a four-digit display; invalid inputs leave the buffer unchanged.
+void SEG7_SetNumbers(seg7_display_t *display, uint16_t first, uint16_t second);
+void SEG7_Clear(seg7_display_t *display);
 void SEG7_Scan(seg7_display_t *display);
 
 #endif /* SEG7_DISPLAY_H */

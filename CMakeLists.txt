@@ -34,7 +34,6 @@ enable_language(C ASM)
 # Create an executable object type
 add_executable(${CMAKE_PROJECT_NAME}
     src/global.c
-    src/fsm.c
     src/fsm_automatic.c
     src/fsm_manual.c
     src/fsm_setting.c
@@ -44,6 +43,7 @@ add_executable(${CMAKE_PROJECT_NAME}
     lib/led_matrix/led_matrix.c
     lib/software_timer/software_timer.c
     lib/button/button.c
+    src/scheduler_on.c
 
 )
 

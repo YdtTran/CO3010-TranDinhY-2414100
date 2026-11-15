@@ -12,15 +12,15 @@ Kiến trúc này đã được triển khai trong src/fsm*.c và src/global.h/c
 
 | Module | Trách nhiệm |
 | --- | --- |
-| `global.h/c` | Chế độ hiện tại, cấu hình thời lượng, object đèn dùng chung và ID timer không trùng nhau. Không chứa logic vận hành. Con trỏ `app` được định nghĩa một lần trong `.c`, khai báo `extern` trong `.h`; trỏ đến context `fsm_t` hiện có của `main.c`. |
+| `global.h/c` | Trạng thái FSM hiện tại, cấu hình thời lượng, object đèn dùng chung và ID timer không trùng nhau. Không chứa logic vận hành. Các biến dùng chung được định nghĩa trong `.c` và khai báo `extern` trong `.h`. |
 | `software_timer.h/c` | Nhận tick TIM2 và cung cấp cờ hết hạn. Không biết chế độ hay quy tắc đèn. |
-| `button.h/c` | Chống dội và phát sự kiện nhấn/giữ. Không tự đổi chế độ. |
+| `button.h/c` | Chống dội và phát cờ nhấn một lần, không lặp khi giữ. Không tự đổi chế độ. |
 | `traffic_light.h/c` | Quản lý từng object đèn: khởi tạo, đặt màu, đặt thời gian, tăng/giảm thời gian và cập nhật GPIO tương ứng. |
-| `fsm_automatic.h/c` | Quản lý pha hai hướng, đếm giây và tự chuyển pha khi hết thời gian. |
+| `fsm_automatic.h/c` | Quản lý bốn pha hai hướng, đặt timer theo thời lượng mỗi pha và chuyển pha khi timer hết hạn. |
 | `fsm_manual.h/c` | Quản lý pha hai hướng, chuyển pha theo sự kiện nút. |
 | `fsm_setting.h/c` | Quản lý mục đang chỉnh, giá trị tạm, xác nhận cấu hình và nhấp nháy đèn. |
 | `seg7_display.h/c` | Quản lý bộ đệm và quét hiển thị, phục vụ mọi chế độ. |
-| `main.c` | Khởi tạo, thu thập sự kiện nút, điều phối đổi chế độ, gọi ba FSM cùng level và phục vụ hiển thị. |
+| `main.c` | Khởi tạo, gọi ba FSM cùng level và phục vụ hiển thị. |
 
 ## Giới hạn của traffic_light
 
@@ -44,56 +44,38 @@ kể cả bảo đảm hai hướng không cùng xanh và chuyển pha đúng th
 
 ## Ba FSM ngang hàng
 
-Luồng xử lý khái niệm trong `main`:
+Luồng xử lý trong main:
 
 ```text
 while (1):
-    phục vụ quét nút theo chu kỳ
-    đọc và xóa cờ nút một lần thành snapshot sự kiện
-    xử lý yêu cầu đổi chế độ và khởi tạo FSM đích nếu cần
-
     FSM_Automatic_Run()
     FSM_Manual_Run()
     FSM_Setting_Run()
-
-    phục vụ quét hiển thị theo chu kỳ
+    FSM_ServiceOutputs()
 ```
 
-Mỗi hàm `Run` kiểm tra chế độ trước khi xử lý:
-
-```c
-void FSM_Automatic_Run(void)
-{
-    if (mode != MODE_AUTOMATIC)
-        return;
-
-    /* Xử lý pha, timer và các object đèn. */
-}
-```
-
-Ba lời gọi thực thi tuần tự, không cần RTOS. Không FSM nào gọi FSM khác.
-Trạng thái nội bộ được giữ riêng trong từng file `.c`: pha của AUTO, pha của
-MANUAL, mục cài đặt/giá trị tạm/trạng thái nhấp nháy của SETTING.
+Mỗi hàm Run có switch (state) ở cấp ngoài cùng, không nằm trong if
+hoặc switch khác. Các case của AUTO/MANUAL dùng chung logic chuyển pha;
+SETTING có các case riêng SET_RED, SET_YELLOW, SET_GREEN. Không có orchestrator.
 
 ## Chuyển chế độ và sự kiện
 
-- Chỉ phần điều phối trước ba lời gọi FSM được thay đổi `mode`.
-- Khi vào chế độ, gọi `FSM_Automatic_Init`, `FSM_Manual_Init` hoặc
-  `FSM_Setting_Init` để đặt trạng thái, timer và đầu ra ban đầu; giữ cấu hình
-  thời lượng đã lưu.
-- Mỗi FSM dùng timer riêng; khi vào chế độ phải đặt lại timer và cờ cũ.
-- Các FSM chỉ đọc snapshot sự kiện của lượt hiện tại, không tự đọc/xóa cờ nút.
-- Nếu lượt đó đổi chế độ, không chuyển tiếp sự kiện thao tác cho FSM đích,
-  tránh một lần nhấn vừa đổi chế độ vừa thực hiện thao tác trong chế độ mới.
-- Quét hiển thị chạy độc lập với chế độ. Ngắt TIM2 chỉ cập nhật software timer;
-  logic vận hành chạy trong vòng lặp chính.
+- Một enum dùng chung chứa bốn trạng thái AUTO, bốn MANUAL và ba SETTING.
+- Mỗi FSM tự đọc/xóa cờ nút trong case và gọi Init của chế độ đích khi BTN1
+  được nhấn. BTN1 có ưu tiên cao hơn BTN2/BTN3.
+- Init đặt trạng thái, đầu ra và timer; xóa mọi cờ nút để tránh truyền lần
+  nhấn sang chế độ mới. Cấu hình thời lượng đã lưu được giữ nguyên.
+- FSM tiêu thụ cờ nút đã xử lý; Init xóa cờ chưa dùng khi chuyển chế độ.
+- Ba FSM chạy tuần tự; chế độ mới có thể chạy ngay trong cùng lượt nếu
+  lời gọi Run của nó nằm phía sau. Không còn cờ nhấn để xử lý lần thứ hai.
+- Quét hiển thị và đèn báo chạy sau cả ba FSM. TIM2 cập nhật software timer và quét nút theo chu kỳ cố định.
 
 ## Hành vi cơ sở đề xuất
 
 - BTN1: `AUTO → MANUAL → SETTING → AUTO`.
 - AUTO: tự chạy chuỗi pha và hiển thị thời gian còn lại.
 - MANUAL: BTN2 chuyển một pha cho mỗi lần nhấn, không lặp khi giữ; BTN3 chưa có chức năng. Hiển thị thời lượng ban đầu của pha và giữ nguyên đến lần chuyển pha tiếp theo.
-- SETTING: BTN2 tăng giá trị; BTN3 lưu rồi chuyển mục `đỏ → vàng → xanh`;
+- SETTING: BTN2 tăng giá trị một lần mỗi lần nhấn, giữ nút không lặp; BTN3 lưu rồi chuyển mục `đỏ → vàng → xanh`;
   BTN1 thoát và bỏ giá trị chưa lưu.
 
 Chuỗi pha của hai hướng A/B:
@@ -109,12 +91,13 @@ trong đó mỗi thời lượng nằm trong 1–99 giây.
 ## Triển khai hiện tại
 
 Đã tách ba FSM vào `src/fsm_automatic.c`, `src/fsm_manual.c`, `src/fsm_setting.c`.
-`src/fsm.c` cung cấp khởi tạo, snapshot sự kiện, điều phối chế độ, cập nhật bộ đệm
+`src/fsm.c` cung cấp khởi tạo, quét/xóa cờ nút, cập nhật bộ đệm
 và thao tác xuất pha dùng chung. Khai báo API nằm trong `src/fsm.h`.
 `main` gọi ba FSM ngang hàng; chỉ sửa USER CODE trong thân hàm `main`.
 CMake và self-check đã được cập nhật. Cấu hình lưu trong RAM, reset về xanh 2 s, vàng 3 s.
 AUTO giữ cách hiển thị cũ N-1..0; SETTING hiển thị 02/03/04 và giá trị đang sửa.
-Timer 0: AUTO, 1: quét LED 7 đoạn, 2: đèn báo, 3: quét nút, 4: nhấp nháy SETTING.
+AUTO suy ra thời gian hiển thị từ timer pha, không giảm bộ đếm của từng đèn.
+Timer 0: AUTO, 1: quét LED 7 đoạn, 2: đèn báo, 3: nhấp nháy SETTING. Quét nút trực tiếp trong tick TIM2.
 Nếu BTN2 và BTN3 cùng phát sự kiện, tăng trước rồi xác nhận.
 Kiểm tra build bằng `ninja -C build/Debug`.
 
@@ -129,3 +112,4 @@ Kiểm tra build bằng `ninja -C build/Debug`.
 - Các lời gọi khởi tạo, điều phối và ba FSM trong tài liệu phải tuân theo giới
   hạn trên. Khi triển khai, kiểm tra cách cung cấp khai báo cho các lời gọi mới
   mà không sửa vùng include của `main.c`.
+

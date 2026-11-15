@@ -1,27 +1,95 @@
-#include "fsm.h"
+#include "fsm_manual.h"
 #include "software_timer.h"
-void FSM_Manual_Init(void)
-{
-    FSM_ClearButtons();
-    SOFT_TIMER_Set(TRAFFIC_TIMER, 0);
-    SOFT_TIMER_Set(COUNTDOWN_TIMER, 0);
-    SOFT_TIMER_Set(BLINK_TIMER, 0);
-    app->state = MAN_GREEN;
-    FSM_SetPhase(0);
-}
+
 void FSM_Manual_Run(void)
 {
-    if (app->state < MAN_GREEN || app->state > MAN_CROSS_YELLOW)
-        return;
-    if (BUTTON_GetPressFlag(&app->buttons[0]))
+    switch (state)
     {
-        FSM_Setting_Init();
-        return;
-    }
-    if (BUTTON_GetPressFlag(&app->buttons[1]))
-    {
-        BUTTON_ClearPressFlag(&app->buttons[1]);
-        app->state = MAN_GREEN + (app->state - MAN_GREEN + 1) % 4;
-        FSM_SetPhase(app->state - MAN_GREEN);
+    case MAN_GREEN:
+        TRAFFIC_LIGHT_SetColor(&light_system, LED_GREEN, LED_RED);
+        SEG7_Clear(&seg7_display);
+        if (BUTTON_GetPressFlag(&buttons[1]))
+        {
+            BUTTON_ClearPressFlag(&buttons[1]);
+            state = MAN_YELLOW;
+
+        }
+        if (BUTTON_GetPressFlag(&buttons[0]))
+        {
+            BUTTON_ClearPressFlags(buttons, 3);
+            state = SET_RED;
+            draft = green_s + yellow_s;
+            blink_on = 1;
+
+            SEG7_SetNumbers(&seg7_display, 2, draft);
+            SOFT_TIMER_Set(BLINK_TIMER, 250);
+        }
+        break;
+
+    case MAN_YELLOW:
+        TRAFFIC_LIGHT_SetColor(&light_system, LED_YELLOW, LED_RED);
+        SEG7_Clear(&seg7_display);
+        if (BUTTON_GetPressFlag(&buttons[1]))
+        {
+            BUTTON_ClearPressFlag(&buttons[1]);
+            state = MAN_CROSS_GREEN;
+
+        }
+        if (BUTTON_GetPressFlag(&buttons[0]))
+        {
+            BUTTON_ClearPressFlags(buttons, 3);
+            state = SET_RED;
+            draft = green_s + yellow_s;
+            blink_on = 1;
+
+            SEG7_SetNumbers(&seg7_display, 2, draft);
+            SOFT_TIMER_Set(BLINK_TIMER, 250);
+        }
+        break;
+
+    case MAN_CROSS_GREEN:
+        TRAFFIC_LIGHT_SetColor(&light_system, LED_RED, LED_GREEN);
+        SEG7_Clear(&seg7_display);
+        if (BUTTON_GetPressFlag(&buttons[1]))
+        {
+            BUTTON_ClearPressFlag(&buttons[1]);
+            state = MAN_CROSS_YELLOW;
+
+        }
+        if (BUTTON_GetPressFlag(&buttons[0]))
+        {
+            BUTTON_ClearPressFlags(buttons, 3);
+            state = SET_RED;
+            draft = green_s + yellow_s;
+            blink_on = 1;
+
+            SEG7_SetNumbers(&seg7_display, 2, draft);
+            SOFT_TIMER_Set(BLINK_TIMER, 250);
+        }
+        break;
+
+    case MAN_CROSS_YELLOW:
+        TRAFFIC_LIGHT_SetColor(&light_system, LED_RED, LED_YELLOW);
+        SEG7_Clear(&seg7_display);
+        if (BUTTON_GetPressFlag(&buttons[1]))
+        {
+            BUTTON_ClearPressFlag(&buttons[1]);
+            state = MAN_GREEN;
+
+        }
+        if (BUTTON_GetPressFlag(&buttons[0]))
+        {
+            BUTTON_ClearPressFlags(buttons, 3);
+            state = SET_RED;
+            draft = green_s + yellow_s;
+            blink_on = 1;
+
+            SEG7_SetNumbers(&seg7_display, 2, draft);
+            SOFT_TIMER_Set(BLINK_TIMER, 250);
+        }
+        break;
+
+    default:
+        break;
     }
 }

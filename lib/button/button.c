@@ -33,21 +33,11 @@ void BUTTON_Scan(button_handle_t *button)
                 // Pressed
                 button->state = BUTTON_PRESSED;
                 button->press_flag = 1;
-                button->timer_for_key_press = button->repeat_ticks;
             }
             else
             {
                 button->state = BUTTON_RELEASED;
                 button->timer_for_key_press = 0;
-            }
-        }
-        else if (button->state == BUTTON_PRESSED && button->timer_for_key_press > 0)
-        {
-            button->timer_for_key_press--;
-            if (button->timer_for_key_press == 0)
-            {
-                button->press_flag = 1;
-                button->timer_for_key_press = button->repeat_ticks;
             }
         }
     }
@@ -66,4 +56,10 @@ uint8_t BUTTON_GetPressFlag(const button_handle_t *button)
 void BUTTON_ClearPressFlag(button_handle_t *button)
 {
     button->press_flag = 0;
+}
+
+void BUTTON_ClearPressFlags(button_handle_t *buttons, uint8_t count)
+{
+    for (uint8_t i = 0; i < count; ++i)
+        BUTTON_ClearPressFlag(&buttons[i]);
 }

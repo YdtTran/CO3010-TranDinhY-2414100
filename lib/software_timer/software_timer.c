@@ -1,15 +1,21 @@
 #include "software_timer.h"
 
 static volatile uint8_t timer_flag[SOFT_TIMER_NUM_MAX] = {0};
-static volatile uint16_t timer_counter[SOFT_TIMER_NUM_MAX] = {0};
+static volatile uint32_t timer_counter[SOFT_TIMER_NUM_MAX] = {0};
 
-void SOFT_TIMER_Set(uint8_t timer_index, uint16_t duration_ms)
+void SOFT_TIMER_Set(uint8_t timer_index, uint32_t duration_ms)
 {
   if (timer_index >= SOFT_TIMER_NUM_MAX)
     return;
 
-  timer_counter[timer_index] = (duration_ms + TICK_INTERVAL_MS - 1U) / TICK_INTERVAL_MS;
+  timer_counter[timer_index] = (duration_ms + TICK_INTERVAL_MS - 1) / TICK_INTERVAL_MS;
   timer_flag[timer_index] = 0;                                 // Clear the expiration flag
+}
+
+uint32_t SOFT_TIMER_Remaining(uint8_t timer_index)
+{
+  if (timer_index >= SOFT_TIMER_NUM_MAX) return 0;
+  return timer_counter[timer_index] * TICK_INTERVAL_MS;
 }
 
 void SOFT_TIMER_Run(void)

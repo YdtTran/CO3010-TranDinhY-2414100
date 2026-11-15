@@ -14,17 +14,17 @@ void SEG7_SetDigit(const uint32_t segs[8], GPIO_TypeDef *port,
         return;
     }
 
-    uint8_t pattern = (value < 10U) ? digit_to_cc[value] : 0U;
+    uint8_t pattern = (value < 10) ? digit_to_cc[value] : 0;
     if (com == SEG7_COMMON_ANODE)
     {
         pattern = (uint8_t)~pattern;
     }
 
-    for (uint8_t i = 0; i < 8U; i++)
+    for (uint8_t i = 0; i < 8; i++)
     {
-        if (segs[i] != 0U)
+        if (segs[i] != 0)
         {
-            GPIO_PinState state = (pattern & (1U << i)) ? GPIO_PIN_SET : GPIO_PIN_RESET;
+            GPIO_PinState state = (pattern & (1 << i)) ? GPIO_PIN_SET : GPIO_PIN_RESET;
             HAL_GPIO_WritePin(port, segs[i], state);
         }
     }

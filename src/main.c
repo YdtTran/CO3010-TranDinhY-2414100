@@ -21,9 +21,13 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "pin.h"
 #include "software_timer.h"
-#include "fsm.h"
+#include "global.h"
+#include "traffic_light.h"
+#include "seg7_display.h"
+#include "fsm_automatic.h"
+#include "fsm_manual.h"
+#include "fsm_setting.h"
 
 /* USER CODE END Includes */
 
@@ -45,7 +49,6 @@
 TIM_HandleTypeDef htim2;
 
 /* USER CODE BEGIN PV */
-static fsm_t fsm;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -53,11 +56,32 @@ void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
 static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
+static void display(void);
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+static void display(void)
+{
+  if (state <= AUTO_CROSS_YELLOW && SOFT_TIMER_Expired(COUNTDOWN_TIMER))
+  {
+    uint16_t first = digits[0] * 10 + digits[1];
+    uint16_t second = digits[2] * 10 + digits[3];
+    if (first > 0)
+      --first;
+    if (second > 0)
+      --second;
+    SEG7_SetNumbers(&seg7_display, first, second);
+    SOFT_TIMER_Set(COUNTDOWN_TIMER, 1000);
+  }
+  if (SOFT_TIMER_Expired(DISPLAY_TIMER))
+  {
+    SEG7_Scan(&seg7_display);
+    SOFT_TIMER_Set(DISPLAY_TIMER, 20);
+  }
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -91,8 +115,19 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
-  FSM_Init(&fsm);
-  /* TIM2 period follows TICK_INTERVAL_MS; indicator toggles every 250 ms. */
+  if (!TRAFFIC_LIGHT_Init(&light_system))
+  {
+    Error_Handler();
+  }
+  SEG7_Init(&seg7_display);
+
+  state = AUTO_GREEN;
+  TRAFFIC_LIGHT_SetColor(&light_system, LED_GREEN, LED_RED);
+  SEG7_SetNumbers(&seg7_display, green_s, green_s + yellow_s);
+  SOFT_TIMER_Set(TRAFFIC_TIMER, green_s * 1000);
+  SOFT_TIMER_Set(COUNTDOWN_TIMER, 1000);
+  SOFT_TIMER_Set(DISPLAY_TIMER, 20);
+
   if (HAL_TIM_Base_Start_IT(&htim2) != HAL_OK)
   {
     Error_Handler();
@@ -105,10 +140,10 @@ int main(void)
   {
     /* USER CODE END WHILE */
     /* USER CODE BEGIN 3 */
+    display();
     FSM_Automatic_Run();
     FSM_Manual_Run();
     FSM_Setting_Run();
-    FSM_ServiceOutputs();
   }
   /* USER CODE END 3 */
 }
@@ -251,7 +286,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   if (htim->Instance == TIM2)
   {
     SOFT_TIMER_Run();
-    FSM_ScanButtons();
+    BUTTON_Scan(buttons);
+    BUTTON_Scan(&buttons[1]);
+    BUTTON_Scan(&buttons[2]);
   }
 }
 /* USER CODE END 4 */

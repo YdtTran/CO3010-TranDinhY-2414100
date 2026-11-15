@@ -4,28 +4,28 @@
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
-        <mxCell vertex="1" parent="1" style="text;html=1;fontFamily=Arial;fontSize=24;fontStyle=1;" id="title" value="PROPOSED OVERALL FSM — TWO-DIRECTION TRAFFIC LIGHT">
+        <mxCell vertex="1" parent="1" style="text;html=1;fontFamily=Arial;fontSize=24;fontStyle=1;" id="title" value="OVERALL FSM — TWO-DIRECTION TRAFFIC LIGHT">
           <mxGeometry y="20" width="1260" as="geometry" height="45" x="90" />
         </mxCell>
         <mxCell vertex="1" parent="1" style="ellipse;html=1;fillColor=#222222;strokeColor=#222222;" id="start" value="">
           <mxGeometry y="120" width="24" as="geometry" height="24" x="95" />
         </mxCell>
-        <mxCell vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=15;strokeWidth=2;fillColor=#dae8fc;strokeColor=#6c8ebf;" id="auto" value="AUTO&#xA;entry: A green / B red; reset phase timer">
+        <mxCell vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=15;strokeWidth=2;fillColor=#dae8fc;strokeColor=#6c8ebf;" id="auto" value="AUTO&lt;br&gt;entry: AUTO_GREEN; clear buttons; stop blink; start GREEN timer">
           <mxGeometry y="100" width="300" as="geometry" height="90" x="180" />
         </mxCell>
-        <mxCell vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=15;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" id="manual" value="MANUAL&#xA;entry: A green / B red; no auto advance">
+        <mxCell vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=15;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" id="manual" value="MANUAL&lt;br&gt;entry: MAN_GREEN; clear buttons; stop traffic and blink timers">
           <mxGeometry y="100" width="300" as="geometry" height="90" x="600" />
         </mxCell>
-        <mxCell vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=15;strokeWidth=2;fillColor=#fff2cc;strokeColor=#d6b656;" id="setting" value="SETTING&#xA;entry: edit RED; load saved value; start blink">
+        <mxCell vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=15;strokeWidth=2;fillColor=#fff2cc;strokeColor=#d6b656;" id="setting" value="SETTING&lt;br&gt;entry: SET_RED; clear buttons; stop traffic timer; blink ON">
           <mxGeometry y="100" width="330" as="geometry" height="90" x="1020" />
         </mxCell>
         <mxCell id="boot" source="start" value="reset" edge="1" parent="1" target="auto" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=13;endArrow=block;labelBackgroundColor=#ffffff;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="am" source="auto" value="BTN1 / enter MANUAL" edge="1" parent="1" target="manual" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=13;endArrow=block;labelBackgroundColor=#ffffff;">
+        <mxCell id="am" source="auto" value="BTN1" edge="1" parent="1" target="manual" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=13;endArrow=block;labelBackgroundColor=#ffffff;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="ms" source="manual" value="BTN1 / enter SETTING" edge="1" parent="1" target="setting" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=13;endArrow=block;labelBackgroundColor=#ffffff;">
+        <mxCell id="ms" source="manual" value="BTN1" edge="1" parent="1" target="setting" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=13;endArrow=block;labelBackgroundColor=#ffffff;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
         <mxCell id="sa" source="setting" value="BTN1 / discard unsaved edit; enter AUTO" edge="1" parent="1" target="auto" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=13;endArrow=block;labelBackgroundColor=#ffffff;exitX=0.5;exitY=0;entryX=0.5;entryY=0;">
@@ -36,7 +36,7 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=15;strokeWidth=2;fillColor=#f5f5f5;strokeColor=#666666;" id="rule" value="MODE DISPATCH IN main(): collect button events once → change mode → initialize destination → call AUTO, MANUAL, SETTING at the same level.&#xA;Only the selected FSM runs. Suppress action events on a mode-change iteration. No FSM calls another FSM.">
+        <mxCell vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=15;strokeWidth=2;fillColor=#f5f5f5;strokeColor=#666666;" id="rule" value="MAIN LOOP: FSM_Automatic_Run → FSM_Manual_Run → FSM_Setting_Run → FSM_ServiceOutputs. Each Run ignores states outside its mode.&lt;br&gt;BTN1 has priority; destination Init clears all button flags. Mode handlers call the next mode Init directly.">
           <mxGeometry y="230" width="1230" as="geometry" height="80" x="120" />
         </mxCell>
         <mxCell vertex="1" parent="1" style="text;html=1;fontFamily=Arial;fontSize=20;fontStyle=1;" id="head0" value="AUTO internal states">
@@ -115,13 +115,13 @@
         <mxCell vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=15;strokeWidth=2;fillColor=#d5e8d4;strokeColor=#82b366;" id="green" value="EDIT GREEN&#xA;BTN2: increment draft (1–99, wrap)">
           <mxGeometry y="810" width="300" as="geometry" height="85" x="1030" />
         </mxCell>
-        <mxCell id="ry" source="red" value="BTN3 [valid] / save; load YELLOW" edge="1" parent="1" target="yellow" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=13;endArrow=block;labelBackgroundColor=#ffffff;">
+        <mxCell id="ry" source="red" value="BTN3 / save; load YELLOW" edge="1" parent="1" target="yellow" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=13;endArrow=block;labelBackgroundColor=#ffffff;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="yg" source="yellow" value="BTN3 [valid] / save; load GREEN" edge="1" parent="1" target="green" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=13;endArrow=block;labelBackgroundColor=#ffffff;">
+        <mxCell id="yg" source="yellow" value="BTN3 / save; load GREEN" edge="1" parent="1" target="green" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=13;endArrow=block;labelBackgroundColor=#ffffff;">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="gr" source="green" value="BTN3 [valid] / save; load RED" edge="1" parent="1" target="red" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=13;endArrow=block;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=1;entryY=0.5;">
+        <mxCell id="gr" source="green" value="BTN3 / save; load RED" edge="1" parent="1" target="red" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;fontSize=13;endArrow=block;labelBackgroundColor=#ffffff;exitX=1;exitY=0.5;entryX=1;entryY=0.5;">
           <mxGeometry relative="1" as="geometry">
             <Array as="points">
               <mxPoint x="1380" y="852" />
@@ -129,16 +129,16 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=15;strokeWidth=2;fillColor=#f5f5f5;strokeColor=#666666;fontSize=14;" id="anote" value="Each 1 s: decrease both counters.&#xA;On timeout: FSM sets next colors and times.&#xA;RED = GREEN + YELLOW.">
+        <mxCell vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=15;strokeWidth=2;fillColor=#f5f5f5;strokeColor=#666666;fontSize=14;" id="anote" value="Phase timer: GREEN = green_s; YELLOW = yellow_s.&lt;br&gt;Timeout: next phase modulo 4.&lt;br&gt;Display: ceil(timer_ms / 1000), add yellow to red during opposite green, then subtract 1 if nonzero.">
           <mxGeometry y="930" width="340" as="geometry" height="100" x="160" />
         </mxCell>
-        <mxCell vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=15;strokeWidth=2;fillColor=#f5f5f5;strokeColor=#666666;fontSize=14;" id="mnote" value="BTN2: one phase per press; no held repeat.&#xA;BTN3: unused.&#xA;No countdown; display initial phase times.">
+        <mxCell vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=15;strokeWidth=2;fillColor=#f5f5f5;strokeColor=#666666;fontSize=14;" id="mnote" value="BTN2: next phase modulo 4; clear press flag.&lt;br&gt;BTN3: unused. No countdown.&lt;br&gt;Display uses stored phase times: green, yellow, or green + yellow for red.">
           <mxGeometry y="930" width="340" as="geometry" height="100" x="580" />
         </mxCell>
-        <mxCell vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=15;strokeWidth=2;fillColor=#f5f5f5;strokeColor=#666666;fontSize=14;" id="snote" value="All edit states: blink selected color every 250 ms.&#xA;BTN3 [invalid]: stay; keep saved config.&#xA;Validate 1–99 s and RED = GREEN + YELLOW.&#xA;Editing RED adjusts GREEN, preserves YELLOW.">
+        <mxCell vertex="1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=15;strokeWidth=2;fillColor=#f5f5f5;strokeColor=#666666;fontSize=14;" id="snote" value="BTN2: draft = draft % 99 + 1; clear press flag.&lt;br&gt;BTN3: save unconditionally, then enter next edit.&lt;br&gt;RED save: green=max(draft-yellow,0). YELLOW/GREEN save: replace that duration.&lt;br&gt;Each entry loads saved draft; selected color toggles every 250 ms; other colors OFF.">
           <mxGeometry y="930" width="370" as="geometry" height="120" x="1000" />
         </mxCell>
-        <mxCell vertex="1" parent="1" style="text;whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=14;align=left;" id="footer" value="OWNERSHIP: FSMs own sequencing, timers and coordination. traffic_light only manages individual objects (color / time / GPIO).&#xA;IMPLEMENTATION CONSTRAINT: only USER CODE blocks inside int main(void) may change in main.c; preserve CubeMX-generated code.&#xA;Proposal, not a diagram extracted from the current firmware. BTN1 transitions apply from every internal state.">
+        <mxCell vertex="1" parent="1" style="text;whiteSpace=wrap;html=1;fontFamily=Arial;fontSize=14;align=left;" id="footer" value="BOOT: green=2 s; yellow=3 s. RUNTIME: TIM2 every 10 ms → SOFT_TIMER_Run + FSM_ScanButtons. Outputs: scan one digit every 20 ms; toggle indicator every 250 ms.&lt;br&gt;SETTING display: 02 / 03 / 04 on first pair, draft on second. AUTO/MANUAL: straight countdown then cross countdown.&lt;br&gt;Sources: src/main.c, fsm.c, fsm_automatic.c, fsm_manual.c, fsm_setting.c. BTN1 transitions apply from every state in the source mode.&lt;br&gt;Current limits: zero green and totals above 99 accepted; draft is uint8_t. A = straight; B = cross. AUTO/MANUAL colors identify modes; edit colors identify the selected lamp.">
           <mxGeometry y="1080" width="1230" as="geometry" height="90" x="140" />
         </mxCell>
       </root>

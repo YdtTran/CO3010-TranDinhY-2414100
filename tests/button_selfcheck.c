@@ -19,7 +19,7 @@ static void scan(button_handle_t *button, GPIO_PinState level, unsigned count)
 int main(void)
 {
     button_handle_t button;
-    BUTTON_Init(&button, GPIOB, GPIO_PIN_13, GPIO_PIN_RESET, 0U);
+    BUTTON_Init(&button, GPIOB, GPIO_PIN_13, GPIO_PIN_RESET, 25);
     scan(&button, GPIO_PIN_RESET, 2);
     assert(!BUTTON_GetPressFlag(&button));
     scan(&button, GPIO_PIN_SET, 1);

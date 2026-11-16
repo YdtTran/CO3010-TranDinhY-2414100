@@ -21,6 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "scheduler.h"
 #include "software_timer.h"
 #include "global.h"
 #include "traffic_light.h"
@@ -57,11 +58,19 @@ static void MX_GPIO_Init(void);
 static void MX_TIM2_Init(void);
 /* USER CODE BEGIN PFP */
 static void display(void);
+static void button_scan(void);
 
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+static void button_scan(void)
+{
+  BUTTON_Scan(buttons);
+  BUTTON_Scan(&buttons[1]);
+  BUTTON_Scan(&buttons[2]);
+}
+
 static void display(void)
 {
   if (state <= AUTO_CROSS_YELLOW && SOFT_TIMER_Expired(COUNTDOWN_TIMER))
@@ -128,6 +137,14 @@ int main(void)
   SOFT_TIMER_Set(COUNTDOWN_TIMER, 1000);
   SOFT_TIMER_Set(DISPLAY_TIMER, 20);
 
+  SCH_Init();
+  SCH_Add_Task(SOFT_TIMER_Run, 0, 1);
+  SCH_Add_Task(button_scan, 0, 1);
+  SCH_Add_Task(display, 0, 1);
+  SCH_Add_Task(FSM_Automatic_Run, 0, 1);
+  SCH_Add_Task(FSM_Manual_Run, 0, 1);
+  SCH_Add_Task(FSM_Setting_Run, 0, 1);
+
   if (HAL_TIM_Base_Start_IT(&htim2) != HAL_OK)
   {
     Error_Handler();
@@ -140,10 +157,7 @@ int main(void)
   {
     /* USER CODE END WHILE */
     /* USER CODE BEGIN 3 */
-    display();
-    FSM_Automatic_Run();
-    FSM_Manual_Run();
-    FSM_Setting_Run();
+    SCH_Dispatch_Tasks();
   }
   /* USER CODE END 3 */
 }
@@ -285,10 +299,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   if (htim->Instance == TIM2)
   {
-    SOFT_TIMER_Run();
-    BUTTON_Scan(buttons);
-    BUTTON_Scan(&buttons[1]);
-    BUTTON_Scan(&buttons[2]);
+    SCH_Update();
   }
 }
 /* USER CODE END 4 */

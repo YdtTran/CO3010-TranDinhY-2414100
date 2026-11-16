@@ -24,13 +24,13 @@ void FSM_Setting_Run(void)
             BUTTON_ClearPressFlag(&buttons[1]);
             ++draft;
             if (draft > 99)
-                draft = yellow_s + 1;
+                draft = 10; // Fixed min bound for Red
             SEG7_SetNumbers(&seg7_display, 2, draft);
         }
         if (BUTTON_GetPressFlag(&buttons[2]))
         {
             BUTTON_ClearPressFlag(&buttons[2]);
-            if (draft > yellow_s && draft <= 99)
+            if (draft >= 10 && draft <= 99) // Fixed range check (10-99)
             {
                 green_s = draft - yellow_s;
                 state = SET_YELLOW;
@@ -70,14 +70,14 @@ void FSM_Setting_Run(void)
         {
             BUTTON_ClearPressFlag(&buttons[1]);
             ++draft;
-            if (draft > 99 - green_s)
-                draft = 1;
+            if (draft > 9) // Fixed max bound for Yellow
+                draft = 1;  // Fixed min bound for Yellow
             SEG7_SetNumbers(&seg7_display, 3, draft);
         }
         if (BUTTON_GetPressFlag(&buttons[2]))
         {
             BUTTON_ClearPressFlag(&buttons[2]);
-            if (draft > 0 && green_s + draft <= 99)
+            if (draft >= 1 && draft <= 9) // Fixed range check (1-9)
             {
                 yellow_s = draft;
                 state = SET_GREEN;
@@ -117,14 +117,14 @@ void FSM_Setting_Run(void)
         {
             BUTTON_ClearPressFlag(&buttons[1]);
             ++draft;
-            if (draft > 99 - yellow_s)
-                draft = 1;
+            if (draft > 90) // Fixed max bound for Green
+                draft = 1;  // Fixed min bound for Green
             SEG7_SetNumbers(&seg7_display, 4, draft);
         }
         if (BUTTON_GetPressFlag(&buttons[2]))
         {
             BUTTON_ClearPressFlag(&buttons[2]);
-            if (draft > 0 && draft + yellow_s <= 99)
+            if (draft >= 1 && draft <= 90) // Fixed range check (1-90)
             {
                 green_s = draft;
                 state = SET_RED;
